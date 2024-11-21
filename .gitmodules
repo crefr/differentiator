@@ -1,0 +1,3 @@
+[submodule "binTree"]
+	path = binTree
+	url = https://github.com/crefr/binTree.git

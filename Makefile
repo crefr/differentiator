@@ -44,12 +44,18 @@ ALLDEPS = $(HEADDIR)differ.h $(HEADDIR)logger.h
 OBJECTS = main.o logger.o differ.o
 OBJECTS_WITH_DIR 	 = $(addprefix $(OBJDIR),$(OBJECTS))
 
-$(FILENAME): $(OBJECTS_WITH_DIR) $(BINTREE_OBJ_WITH_DIR) $(LIBS)
+TREELIB = binTree/Obj/bintree.a
+TREELIBFOLDER = binTree/
+
+$(FILENAME): $(OBJECTS_WITH_DIR) $(BINTREE_OBJ_WITH_DIR) $(TREELIB)
 	$(CC) $(CFLAGS) $^ -o $@
 
 $(OBJECTS_WITH_DIR): $(OBJDIR)%.o: $(SRCDIR)%.cpp $(ALLDEPS)
 	mkdir -p $(OBJDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
+
+$(TREELIB):
+	cd $(TREELIBFOLDER) && make static_lib
 
 clean:
 	rm $(OBJDIR)*
