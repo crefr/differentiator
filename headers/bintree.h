@@ -1,13 +1,19 @@
 #ifndef BINTREE_INCLUDED
 #define BINTREE_INCLUDED
 
+#include <stdint.h>
+
 /// @brief structure for node
 typedef struct node {
     void * data;
     size_t elem_size;
+
     node * parent;
+
     node * left;
     node * right;
+
+    uint32_t color_for_dump;
 } node_t;
 
 typedef void(*printfunc_t)(void *);
@@ -22,7 +28,7 @@ typedef enum {
 } dump_mode_t;
 
 /// @brief creates new node
-node_t * newNode(void * data, size_t elem_size, node_t * left_child, node_t * right_child);
+node_t * newNode(void * data, size_t elem_size, node_t * left_child, node_t * right_child, uint32_t color);
 
 /// @brief deletes node
 void delNode(node_t * node);
@@ -34,7 +40,7 @@ void treeDestroy(node_t * node);
 void printTree(node_t * node, printfunc_t printElem);
 
 /// @brief adds new node as in sorting bin tree
-void treeSortAddNode(node_t * node, void * data, size_t elem_size, compare_func_t cmp);
+void treeSortAddNode(node_t * node, void * data, size_t elem_size, compare_func_t cmp, uint32_t color);
 
 /// @brief finds node in tree starting with the root_node
 node_t * treeFindNode(node_t * root_node, void * data, compare_func_t cmp);

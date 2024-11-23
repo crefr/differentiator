@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 
 #include "differ.h"
 #include "bintree.h"
@@ -18,11 +19,10 @@ double evaluate(node_t * node)
     assert(node);
 
     logPrint(LOG_DEBUG, "entered evaluate for root %p\n", node);
-    logPrint(LOG_DEBUG_PLUS, "\tvalue: %lg, type: %d\n", val_(node).dval, type_(node));
+    logPrint(LOG_DEBUG_PLUS, "\tvalue: %lg, type: %d\n", val_(node).number, type_(node));
 
     if (type_(node) == OPR){
-        printf("operation %d\n", val_(node).ival);
-        switch (val_(node).ival){
+        switch (val_(node).op){
             case ADD:
                 return evaluate(node->left) + evaluate(node->right);
 
@@ -41,8 +41,83 @@ double evaluate(node_t * node)
         }
     }
     if (type_(node) == NUM)
-        return val_(node).dval;
+        return val_(node).number;
 
     if (type_(node) == VAR)
         return GlobalX;
+
+    return 0.;
+}
+
+const size_t BUFFER_LEN = 32;
+
+node_t * readEquationPrefix(FILE * input_file)
+{
+    node_t * node = NULL;
+
+    fscanf(input_file, "(");
+
+    char buffer[BUFFER_LEN] = "";
+    fscanf(input_file, " %[^()] ", buffer);
+
+    char * opr_ptr = NULL;
+    if ((opr_ptr = strpbrk(buffer, "+-*/")) != NULL){
+        expr_elem_t temp = {};
+
+        temp.type = OPR;
+        temp.val.op = (oper_t)(*opr_ptr);
+
+        node = newNode(&temp, sizeof(temp),
+            readEquationPrefix(input_file),
+            readEquationPrefix(input_file),
+            OPR_COLOR
+        );
+    }
+    else {
+        double number = 0.;
+        if (sscanf(buffer, "%lg", &number) > 0){
+            expr_elem_t temp = {};
+
+            temp.type = NUM;
+            temp.val.number = number;
+
+            node = newNode(&temp, sizeof(temp), NULL, NULL, NUM_COLOR);
+        }
+
+        else {
+            expr_elem_t temp = {};
+
+            temp.type = VAR;
+            temp.val.var = 0;
+
+            node = newNode(&temp, sizeof(temp), NULL, NULL, VAR_COLOR);
+        }
+    }
+
+    fscanf(input_file, ")");
+
+    return node;
+}
+
+void exprElemToStr(char * str, void * data)
+{
+    expr_elem_t * elem = (expr_elem_t *)data;
+
+    switch (elem->type){
+        case OPR:
+            sprintf(str, "type = 'OPR', value.op     = %d", elem->val.op);
+            break;
+
+        case NUM:
+            sprintf(str, "type = 'NUM', value.number = %lg", elem->val.number);
+            break;
+
+        case VAR:
+            sprintf(str, "type = 'VAR', value.var    = %d", elem->val.var);
+            break;
+
+        default:
+            logPrint(LOG_RELEASE, "incorrect elem type in elemToStr\n");
+            break;
+    }
 }
