@@ -36,6 +36,9 @@ void delNode(node_t * node);
 /// @brief recursively destroys tree starting with the node
 void treeDestroy(node_t * node);
 
+/// @brief copies tree with the node as the root
+node_t * treeCopy(node_t * node);
+
 /// @brief prints tree starting with the node
 void printTree(node_t * node, printfunc_t printElem);
 

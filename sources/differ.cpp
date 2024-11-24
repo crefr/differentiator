@@ -10,6 +10,12 @@
 
 static void fillOperTable(diff_context_t * diff);
 
+static node_t * newOprNode(enum oper op_num, node_t * left, node_t * right);
+
+static node_t * newNumNode(double num);
+
+static node_t * newVarNode(unsigned int var_index);
+
 const size_t OPR_TABLE_SIZE = 32;
 
 const size_t VAR_TABLE_SIZE = 32;
@@ -89,26 +95,15 @@ node_t * readEquationPrefix(diff_context_t * diff, FILE * input_file)
 
     name_t * operation = tableLookup(&(diff->oper_table), buffer);
     if (operation != NULL){
-        expr_elem_t temp = {};
-
-        temp.type = OPR;
-        temp.val.op = (enum oper) *((int *)(operation->data));
-
-        node = newNode(&temp, sizeof(temp),
+        node = newOprNode((enum oper) *((int *)(operation->data)),
             readEquationPrefix(diff, input_file),
-            readEquationPrefix(diff, input_file),
-            OPR_COLOR
+            readEquationPrefix(diff, input_file)
         );
     }
     else {
         double number = 0.;
         if (sscanf(buffer, "%lg", &number) > 0){
-            expr_elem_t temp = {};
-
-            temp.type = NUM;
-            temp.val.number = number;
-
-            node = newNode(&temp, sizeof(temp), NULL, NULL, NUM_COLOR);
+            node = newNumNode(number);
         }
 
         else {
@@ -126,13 +121,7 @@ node_t * readEquationPrefix(diff_context_t * diff, FILE * input_file)
             else {
                 var_index = *(unsigned int *)(variable->data);
             }
-
-            expr_elem_t temp = {};
-
-            temp.type = VAR;
-            temp.val.var = var_index;
-
-            node = newNode(&temp, sizeof(temp), NULL, NULL, VAR_COLOR);
+            node = newVarNode(var_index);
         }
     }
 
@@ -156,7 +145,7 @@ void exprElemToStr(char * str, void * data)
 
     switch (elem->type){
         case OPR:
-            sprintf(str, "type = 'OPR', value.op     = %d", elem->val.op);
+            sprintf(str, "type = 'OPR', value.op     = %c", elem->val.op);
             break;
 
         case NUM:
@@ -173,6 +162,97 @@ void exprElemToStr(char * str, void * data)
     }
 }
 
+node_t * makeDerivative(diff_context_t * diff, node_t * expr_node, unsigned int var_index)
+{
+    assert(diff);
+    assert(expr_node);
+
+    switch (type_(expr_node)){
+        case NUM: {
+            return newNumNode(0.);
+        }
+        case VAR: {
+            if (val_(expr_node).var == var_index){
+                return newNumNode(1.);
+            }
+            return treeCopy(expr_node);
+        }
+        case OPR: {
+            switch(val_(expr_node).op){
+                case ADD: {
+                    return newOprNode(ADD,
+                        makeDerivative(diff, expr_node->left , var_index),
+                        makeDerivative(diff, expr_node->right, var_index));
+                }
+                case SUB: {
+                    return newOprNode(SUB,
+                        makeDerivative(diff, expr_node->left , var_index),
+                        makeDerivative(diff, expr_node->right, var_index));
+                }
+                case MUL: {
+                    node_t * dLeft  = makeDerivative(diff, expr_node->left, var_index);
+                    node_t * dRight = makeDerivative(diff, expr_node->right, var_index);
+
+                    node_t * cLeft  = treeCopy(expr_node->left);
+                    node_t * cRight = treeCopy(expr_node->right);
+
+                    return  newOprNode(ADD,
+                                newOprNode(MUL, dLeft, cRight),
+                                newOprNode(MUL, cLeft, dRight));
+                }
+                case DIV: {
+                    node_t * dLeft  = makeDerivative(diff, expr_node->left, var_index);
+                    node_t * dRight = makeDerivative(diff, expr_node->right, var_index);
+
+                    node_t * cLeft  = treeCopy(expr_node->left);
+                    node_t * cRight = treeCopy(expr_node->right);
+
+                    node_t * cRight1 = treeCopy(expr_node->right);  //TODO r^2 instead of r*r
+                    node_t * cRight2 = treeCopy(expr_node->right);
+
+
+                    return  newOprNode(DIV,
+                                newOprNode(SUB,
+                                    newOprNode(MUL, dLeft, cRight),
+                                    newOprNode(MUL, cLeft, dRight)),
+                                newOprNode(MUL, cRight1, cRight2));
+                }
+                default:
+                    printf("havent implementes this operator yet (%d)...\n", val_(expr_node).op);
+                    return NULL;
+
+            }
+        }
+    }
+}
+
+static node_t * newOprNode(enum oper op_num, node_t * left, node_t * right)
+{
+    expr_elem_t operation = {};
+    operation.type = OPR;
+    operation.val.var = op_num;
+
+    return newNode(&operation, sizeof(operation), left, right, OPR_COLOR);
+}
+
+static node_t * newNumNode(double num)
+{
+    expr_elem_t number = {};
+    number.type = NUM;
+    number.val.number = num;
+
+    return newNode(&number, sizeof(number), NULL, NULL, NUM_COLOR);
+}
+
+static node_t * newVarNode(unsigned int var_index)
+{
+    expr_elem_t variable = {};
+    variable.type = VAR;
+    variable.val.var = var_index;
+
+    return newNode(&variable, sizeof(variable), NULL, NULL, VAR_COLOR);
+}
+
 void diffDump(diff_context_t * diff)
 {
     logPrint(LOG_DEBUG, "<h2>-----DIFFERENTIATOR DUMP-----</h2>\n");
@@ -184,4 +264,6 @@ void diffDump(diff_context_t * diff)
                             "\t\tvalue: %lg\n",
                              var_index, diff->vars[var_index].name, diff->vars[var_index].value);
     }
+
+    logPrint(LOG_DEBUG, "<h2>---DIFFERENTIATOR DUMP END---</h2>\n");
 }

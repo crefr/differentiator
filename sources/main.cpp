@@ -17,17 +17,20 @@ int main()
     diffInit(&diff);
 
     node_t * tree = readEquationPrefix(&diff, stdin);
+    node_t * derivative = makeDerivative(&diff, tree, 0);
 
     treeDumpGraph(tree, exprElemToStr);
+    treeDumpGraph(derivative, exprElemToStr);
 
-    setVariables(&diff);
-
-    double answer = evaluate(&diff, tree);
-    printf("answer is %lg\n", answer);
+//     setVariables(&diff);
+//
+//     double answer = evaluate(&diff, tree);
+//     printf("answer is %lg\n", answer);
 
     diffDump(&diff);
 
     treeDestroy(tree);
+    treeDestroy(derivative);
     diffDtor(&diff);
 
 

@@ -82,6 +82,8 @@ void exprElemToStr(char * str, void * data);
 
 void setVariables(diff_context_t * diff);
 
+node_t * makeDerivative(diff_context_t * diff, node_t * expr_node, unsigned int var_index);
+
 /// @brief initializes some stuff
 void diffInit(diff_context_t * diff);
 
