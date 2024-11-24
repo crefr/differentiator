@@ -41,6 +41,8 @@ typedef struct {
 
 const oper_t oper_table[] = {
     {.name = "+"  , .num = ADD},
+    {.name = "add", .num = ADD},
+
     {.name = "-"  , .num = SUB},
     {.name = "*"  , .num = MUL},
     {.name = "/"  , .num = DIV},

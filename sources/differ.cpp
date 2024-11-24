@@ -75,17 +75,17 @@ node_t * readEquationPrefix(FILE * input_file)
 {
     node_t * node = NULL;
 
-    fscanf(input_file, "(");
+    fscanf(input_file, " ( ");
 
     char buffer[BUFFER_LEN] = "";
-    fscanf(input_file, " %[^()] ", buffer);
+    fscanf(input_file, " %[^() ] ", buffer);
 
-    char * opr_ptr = NULL;
-    if ((opr_ptr = strpbrk(buffer, "+-*/")) != NULL){
+    name_t * operation = tableLookup(&G_oper_table, buffer);
+    if (operation != NULL){
         expr_elem_t temp = {};
 
         temp.type = OPR;
-        temp.val.op = (enum oper)(*opr_ptr);
+        temp.val.op = (enum oper) *((int *)(operation->data));
 
         node = newNode(&temp, sizeof(temp),
             readEquationPrefix(input_file),
@@ -114,7 +114,7 @@ node_t * readEquationPrefix(FILE * input_file)
         }
     }
 
-    fscanf(input_file, ")");
+    fscanf(input_file, " ) ");
 
     return node;
 }
