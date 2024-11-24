@@ -13,17 +13,23 @@ int main()
     mkdir("logs", S_IFDIR);
     logStart("logs/log.html", LOG_DEBUG_PLUS, LOG_HTML);
 
-    diffInit();
+    diff_context_t diff ={};
+    diffInit(&diff);
 
-    node_t * tree = readEquationPrefix(stdin);
-    setGlobalX(26.0);
+    node_t * tree = readEquationPrefix(&diff, stdin);
 
     treeDumpGraph(tree, exprElemToStr);
 
-    double answer = evaluate(tree);
+    setVariables(&diff);
+
+    double answer = evaluate(&diff, tree);
     printf("answer is %lg\n", answer);
 
+    diffDump(&diff);
+
     treeDestroy(tree);
+    diffDtor(&diff);
+
 
     logExit();
     return 0;
