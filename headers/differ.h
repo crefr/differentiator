@@ -27,11 +27,6 @@ enum oper{
 };
 
 typedef struct {
-    const char * name;
-    enum oper num;
-} oper_t;
-
-typedef struct {
     enum elem_type type;
     union {
         double number;
@@ -57,10 +52,13 @@ typedef struct {
     unsigned int var_num;
 } diff_context_t;
 
+typedef struct {
+    const char * name;
+    enum oper num;
+} oper_t;
+
 const oper_t opers[] = {
     {.name = "+"  , .num = ADD},
-    {.name = "add", .num = ADD},
-
     {.name = "-"  , .num = SUB},
     {.name = "*"  , .num = MUL},
     {.name = "/"  , .num = DIV},
@@ -83,6 +81,8 @@ void exprElemToStr(char * str, void * data);
 void setVariables(diff_context_t * diff);
 
 node_t * makeDerivative(diff_context_t * diff, node_t * expr_node, unsigned int var_index);
+
+bool foldConstants(node_t * node, double * ans);
 
 /// @brief initializes some stuff
 void diffInit(diff_context_t * diff);

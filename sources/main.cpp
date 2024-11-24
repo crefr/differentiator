@@ -22,10 +22,15 @@ int main()
     treeDumpGraph(tree, exprElemToStr);
     treeDumpGraph(derivative, exprElemToStr);
 
-//     setVariables(&diff);
-//
-//     double answer = evaluate(&diff, tree);
-//     printf("answer is %lg\n", answer);
+    double temp = 0;
+    foldConstants(derivative, &temp);
+
+    treeDumpGraph(derivative, exprElemToStr);
+
+    setVariables(&diff);
+
+    double answer = evaluate(&diff, tree);
+    printf("answer is %lg\n", answer);
 
     diffDump(&diff);
 

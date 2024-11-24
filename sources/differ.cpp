@@ -20,16 +20,6 @@ const size_t OPR_TABLE_SIZE = 32;
 
 const size_t VAR_TABLE_SIZE = 32;
 
-
-static void fillOperTable(diff_context_t * diff)
-{
-    assert(diff);
-
-    for (size_t oper_index = 0; oper_index < opers_size; oper_index++){
-        tableInsert(&(diff->oper_table), opers[oper_index].name, &(opers[oper_index].num), sizeof(enum oper));
-    }
-}
-
 void diffInit(diff_context_t * diff)
 {
     assert(diff);
@@ -44,6 +34,15 @@ void diffDtor(diff_context_t * diff)
 {
     tableDtor(&(diff->oper_table));
     tableDtor(&(diff-> var_table));
+}
+
+static void fillOperTable(diff_context_t * diff)
+{
+    assert(diff);
+
+    for (size_t oper_index = 0; oper_index < opers_size; oper_index++){
+        tableInsert(&(diff->oper_table), opers[oper_index].name, &(opers[oper_index].num), sizeof(enum oper));
+    }
 }
 
 double evaluate(diff_context_t * diff, node_t * node)
@@ -82,6 +81,60 @@ double evaluate(diff_context_t * diff, node_t * node)
     return 0.;
 }
 
+bool foldConstants(node_t * node, double * ans)
+{
+    if (type_(node) == VAR)
+        return false;
+
+    if (type_(node) == NUM){
+        *ans = val_(node).number;
+        return true;
+    }
+
+    double  left_val = 0;
+    double right_val = 0;
+
+    bool  left_is_const = foldConstants(node->left , &left_val);
+    bool right_is_const = foldConstants(node->right, &right_val);
+
+    if (left_is_const){
+        treeDestroy(node->left);
+        node->left = newNumNode(left_val);
+        node->left->parent = node;
+    }
+    if (right_is_const){
+        treeDestroy(node->right);
+        node->right = newNumNode(right_val);
+        node->right->parent = node;
+    }
+
+    if (left_is_const && right_is_const){
+        switch (val_(node).op){
+            case ADD:
+                *ans = left_val + right_val;
+                break;
+
+            case SUB:
+                *ans = left_val - right_val;
+                break;
+
+            case MUL:
+                *ans = left_val * right_val;
+                break;
+
+            case DIV:
+                *ans = left_val / right_val;
+                break;
+
+            default:
+                logPrint(LOG_RELEASE, "evaluate operation type error\n");
+                return false;
+        }
+        return true;
+    }
+    return false;
+}
+
 const size_t BUFFER_LEN = 32;
 
 node_t * readEquationPrefix(diff_context_t * diff, FILE * input_file)
@@ -95,10 +148,10 @@ node_t * readEquationPrefix(diff_context_t * diff, FILE * input_file)
 
     name_t * operation = tableLookup(&(diff->oper_table), buffer);
     if (operation != NULL){
-        node = newOprNode((enum oper) *((int *)(operation->data)),
-            readEquationPrefix(diff, input_file),
-            readEquationPrefix(diff, input_file)
-        );
+        node_t * left_operand  = readEquationPrefix(diff, input_file);
+        node_t * right_operand = readEquationPrefix(diff, input_file);
+
+        node = newOprNode((enum oper) *((int *)(operation->data)), left_operand, right_operand);
     }
     else {
         double number = 0.;
@@ -218,9 +271,8 @@ node_t * makeDerivative(diff_context_t * diff, node_t * expr_node, unsigned int 
                                 newOprNode(MUL, cRight1, cRight2));
                 }
                 default:
-                    printf("havent implementes this operator yet (%d)...\n", val_(expr_node).op);
+                    printf("havent implemented this operator yet (%d)...\n", val_(expr_node).op);
                     return NULL;
-
             }
         }
     }
@@ -267,3 +319,4 @@ void diffDump(diff_context_t * diff)
 
     logPrint(LOG_DEBUG, "<h2>---DIFFERENTIATOR DUMP END---</h2>\n");
 }
+
