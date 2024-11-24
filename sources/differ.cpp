@@ -6,12 +6,32 @@
 #include "differ.h"
 #include "bintree.h"
 #include "logger.h"
+#include "hashtable.h"
+
+static void fillOperTable();
 
 static double GlobalX = 0;
+
+const size_t OPER_TABLE_SIZE = 32;
+static table_t G_oper_table = {};
 
 void setGlobalX(double x)
 {
     GlobalX = x;
+}
+
+static void fillOperTable()
+{
+    G_oper_table = tableCtor(OPER_TABLE_SIZE);
+
+    for (size_t oper_index = 0; oper_index < oper_table_size; oper_index++){
+        tableInsert(&G_oper_table, oper_table[oper_index].name, &(oper_table[oper_index].num), sizeof(enum oper));
+    }
+}
+
+void diffInit()
+{
+    fillOperTable();
 }
 
 double evaluate(node_t * node)
@@ -65,7 +85,7 @@ node_t * readEquationPrefix(FILE * input_file)
         expr_elem_t temp = {};
 
         temp.type = OPR;
-        temp.val.op = (oper_t)(*opr_ptr);
+        temp.val.op = (enum oper)(*opr_ptr);
 
         node = newNode(&temp, sizeof(temp),
             readEquationPrefix(input_file),

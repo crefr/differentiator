@@ -1,3 +1,6 @@
 [submodule "binTree"]
 	path = binTree
 	url = https://github.com/crefr/binTree.git
+[submodule "hash-table"]
+	path = hash-table
+	url = https://github.com/crefr/hash-table.git

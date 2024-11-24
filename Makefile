@@ -47,7 +47,10 @@ OBJECTS_WITH_DIR 	 = $(addprefix $(OBJDIR),$(OBJECTS))
 TREELIB = binTree/Obj/bintree.a
 TREELIBFOLDER = binTree/
 
-$(FILENAME): $(OBJECTS_WITH_DIR) $(BINTREE_OBJ_WITH_DIR) $(TREELIB)
+TABLELIB = hash-table/Obj/hashtable.a
+TABLELIBFOLDER = hash-table/
+
+$(FILENAME): $(OBJECTS_WITH_DIR) $(BINTREE_OBJ_WITH_DIR) $(TREELIB) $(TABLELIB)
 	$(CC) $(CFLAGS) $^ -o $@
 
 $(OBJECTS_WITH_DIR): $(OBJDIR)%.o: $(SRCDIR)%.cpp $(ALLDEPS)
@@ -55,7 +58,10 @@ $(OBJECTS_WITH_DIR): $(OBJDIR)%.o: $(SRCDIR)%.cpp $(ALLDEPS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(TREELIB):
-	cd $(TREELIBFOLDER) && make static_lib
+	cd $(TREELIBFOLDER)  && make static_lib
+
+$(TABLELIB):
+	cd $(TABLELIBFOLDER) && make static_lib
 
 clean:
 	rm $(OBJDIR)*

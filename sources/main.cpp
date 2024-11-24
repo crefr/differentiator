@@ -13,6 +13,8 @@ int main()
     mkdir("logs", S_IFDIR);
     logStart("logs/log.html", LOG_DEBUG_PLUS, LOG_HTML);
 
+    diffInit();
+
     node_t * tree = readEquationPrefix(stdin);
     setGlobalX(26.0);
 
