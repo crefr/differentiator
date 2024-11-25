@@ -16,11 +16,11 @@ enum elem_type{
 };
 
 enum oper{
-    ADD = '+',
-    SUB = '-',
-    MUL = '*',
-    DIV = '/',
-    POW = '^',
+    ADD = 0,
+    SUB,
+    MUL,
+    DIV,
+    POW,
     SIN,
     COS,
     TAN
@@ -55,17 +55,18 @@ typedef struct {
 typedef struct {
     const char * name;
     enum oper num;
+    bool binary;
 } oper_t;
 
-const oper_t opers[] = {
-    {.name = "+"  , .num = ADD},
-    {.name = "-"  , .num = SUB},
-    {.name = "*"  , .num = MUL},
-    {.name = "/"  , .num = DIV},
-    {.name = "^"  , .num = POW},
-    {.name = "sin", .num = SIN},
-    {.name = "cos", .num = COS},
-    {.name = "tan", .num = TAN}
+const oper_t opers[] = { //TODO make it independent of constant places in enum oper
+    {.name = "+"  , .num = ADD, .binary = true},
+    {.name = "-"  , .num = SUB, .binary = true},
+    {.name = "*"  , .num = MUL, .binary = true},
+    {.name = "/"  , .num = DIV, .binary = true},
+    {.name = "^"  , .num = POW, .binary = true},
+    {.name = "sin", .num = SIN, .binary = false},
+    {.name = "cos", .num = COS, .binary = false},
+    {.name = "tan", .num = TAN, .binary = false}
 };
 const size_t opers_size = sizeof(opers) / sizeof(*opers);
 

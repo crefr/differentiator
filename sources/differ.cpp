@@ -25,7 +25,7 @@ void diffInit(diff_context_t * diff)
     assert(diff);
 
     diff->oper_table = tableCtor(OPR_TABLE_SIZE);
-    diff->var_table  = tableCtor(VAR_TABLE_SIZE);
+    diff-> var_table = tableCtor(VAR_TABLE_SIZE);
 
     fillOperTable(diff);
 }
@@ -41,7 +41,7 @@ static void fillOperTable(diff_context_t * diff)
     assert(diff);
 
     for (size_t oper_index = 0; oper_index < opers_size; oper_index++){
-        tableInsert(&(diff->oper_table), opers[oper_index].name, &(opers[oper_index].num), sizeof(enum oper));
+        tableInsert(&(diff->oper_table), opers[oper_index].name, opers + oper_index, sizeof(oper_t));
     }
 }
 
@@ -91,46 +91,47 @@ bool foldConstants(node_t * node, double * ans)
         return true;
     }
 
-    double  left_val = 0;
-    double right_val = 0;
+    if (opers[val_(node).op].binary){ //TODO make the same for unary
+        double  left_val = 0;
+        double right_val = 0;
 
-    bool  left_is_const = foldConstants(node->left , &left_val);
-    bool right_is_const = foldConstants(node->right, &right_val);
+        bool  left_is_const = foldConstants(node->left , &left_val);
+        bool right_is_const = foldConstants(node->right, &right_val);
 
-    if (left_is_const){
-        treeDestroy(node->left);
-        node->left = newNumNode(left_val);
-        node->left->parent = node;
-    }
-    if (right_is_const){
-        treeDestroy(node->right);
-        node->right = newNumNode(right_val);
-        node->right->parent = node;
-    }
-
-    if (left_is_const && right_is_const){
-        switch (val_(node).op){
-            case ADD:
-                *ans = left_val + right_val;
-                break;
-
-            case SUB:
-                *ans = left_val - right_val;
-                break;
-
-            case MUL:
-                *ans = left_val * right_val;
-                break;
-
-            case DIV:
-                *ans = left_val / right_val;
-                break;
-
-            default:
-                logPrint(LOG_RELEASE, "evaluate operation type error\n");
-                return false;
+        if (left_is_const){
+            treeDestroy(node->left);
+            node->left = newNumNode(left_val);
+            node->left->parent = node;
         }
-        return true;
+        if (right_is_const){
+            treeDestroy(node->right);
+            node->right = newNumNode(right_val);
+            node->right->parent = node;
+        }
+
+        if (left_is_const && right_is_const){
+            switch (val_(node).op){
+                case ADD:
+                    *ans = left_val + right_val;
+                    break;
+
+                case SUB:
+                    *ans = left_val - right_val;
+                    break;
+
+                case MUL:
+                    *ans = left_val * right_val;
+                    break;
+
+                case DIV:
+                    *ans = left_val / right_val;
+                    break;
+
+                default:
+                    return false;
+            }
+            return true;
+        }
     }
     return false;
 }
@@ -146,12 +147,21 @@ node_t * readEquationPrefix(diff_context_t * diff, FILE * input_file)
     char buffer[BUFFER_LEN] = "";
     fscanf(input_file, " %[^() ] ", buffer);
 
-    name_t * operation = tableLookup(&(diff->oper_table), buffer);
-    if (operation != NULL){
-        node_t * left_operand  = readEquationPrefix(diff, input_file);
-        node_t * right_operand = readEquationPrefix(diff, input_file);
+    name_t * oper_in_table = tableLookup(&(diff->oper_table), buffer);
+    if (oper_in_table != NULL){
+        oper_t * operation = (oper_t *)(oper_in_table->data);
 
-        node = newOprNode((enum oper) *((int *)(operation->data)), left_operand, right_operand);
+        if (operation->binary){
+            node_t * left_operand  = readEquationPrefix(diff, input_file);
+            node_t * right_operand = readEquationPrefix(diff, input_file);
+
+            node = newOprNode(operation->num, left_operand, right_operand);
+        }
+        else {
+            node_t * operand  = readEquationPrefix(diff, input_file);
+
+            node = newOprNode(operation->num, operand, NULL);
+        }
     }
     else {
         double number = 0.;
@@ -198,7 +208,7 @@ void exprElemToStr(char * str, void * data)
 
     switch (elem->type){
         case OPR:
-            sprintf(str, "type = 'OPR', value.op     = %c", elem->val.op);
+            sprintf(str, "type = 'OPR', operation '%s' ", opers[elem->val.op]);
             break;
 
         case NUM:
@@ -251,25 +261,63 @@ node_t * makeDerivative(diff_context_t * diff, node_t * expr_node, unsigned int 
 
                     return  newOprNode(ADD,
                                 newOprNode(MUL, dLeft, cRight),
-                                newOprNode(MUL, cLeft, dRight));
+                                newOprNode(MUL, cLeft, dRight)
+                            );
                 }
                 case DIV: {
                     node_t * dLeft  = makeDerivative(diff, expr_node->left, var_index);
                     node_t * dRight = makeDerivative(diff, expr_node->right, var_index);
 
                     node_t * cLeft  = treeCopy(expr_node->left);
-                    node_t * cRight = treeCopy(expr_node->right);
+                    node_t * cRightUp = treeCopy(expr_node->right);
 
-                    node_t * cRight1 = treeCopy(expr_node->right);  //TODO r^2 instead of r*r
-                    node_t * cRight2 = treeCopy(expr_node->right);
-
+                    node_t * cRightDown = treeCopy(expr_node->right);  //TODO r^2 instead of r*r
 
                     return  newOprNode(DIV,
                                 newOprNode(SUB,
-                                    newOprNode(MUL, dLeft, cRight),
-                                    newOprNode(MUL, cLeft, dRight)),
-                                newOprNode(MUL, cRight1, cRight2));
+                                    newOprNode(MUL, dLeft, cRightUp),
+                                    newOprNode(MUL, cLeft, dRight)
+                                ),
+                                newOprNode(POW, cRightDown, newNumNode(2.))
+                            );
                 }
+                case POW: { //TODO add exponent part's derivative
+                    return  newOprNode(MUL,
+                                treeCopy(expr_node->right),
+                                newOprNode(POW,
+                                    treeCopy(expr_node->left),
+                                    newOprNode(SUB,
+                                        treeCopy(expr_node->right),
+                                        newNumNode(1.)
+                                    )
+                                )
+                            );
+                }
+                case SIN: {
+                    return  newOprNode(MUL,
+                                newOprNode(COS, treeCopy(expr_node->left), NULL),
+                                makeDerivative(diff, expr_node->left, var_index)
+                            );
+                }
+                case COS: {
+                    return  newOprNode(MUL,
+                                newOprNode(COS, treeCopy(expr_node->left), NULL),
+                                newOprNode(MUL,
+                                    makeDerivative(diff, expr_node->left, var_index),
+                                    newNumNode(-1.)
+                                )
+                            );
+                }
+                case TAN: {
+                    return  newOprNode(DIV,
+                                newNumNode(1.),
+                                newOprNode(POW,
+                                    newOprNode(COS, treeCopy(expr_node->left), NULL),
+                                    newNumNode(2.)
+                                )
+                            );
+                }
+
                 default:
                     printf("havent implemented this operator yet (%d)...\n", val_(expr_node).op);
                     return NULL;

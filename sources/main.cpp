@@ -12,9 +12,12 @@ int main()
 {
     mkdir("logs", S_IFDIR);
     logStart("logs/log.html", LOG_DEBUG_PLUS, LOG_HTML);
+    logCancelBuffer();
 
     diff_context_t diff ={};
     diffInit(&diff);
+
+    treeSetDumpMode(DUMP_MEDIUM);
 
     node_t * tree = readEquationPrefix(&diff, stdin);
     node_t * derivative = makeDerivative(&diff, tree, 0);
@@ -27,10 +30,10 @@ int main()
 
     treeDumpGraph(derivative, exprElemToStr);
 
-    setVariables(&diff);
-
-    double answer = evaluate(&diff, tree);
-    printf("answer is %lg\n", answer);
+//     setVariables(&diff);
+//
+//     double answer = evaluate(&diff, tree);
+//     printf("answer is %lg\n", answer);
 
     diffDump(&diff);
 
