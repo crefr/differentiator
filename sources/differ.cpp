@@ -271,7 +271,7 @@ node_t * makeDerivative(diff_context_t * diff, node_t * expr_node, unsigned int 
                     node_t * cLeft  = treeCopy(expr_node->left);
                     node_t * cRightUp = treeCopy(expr_node->right);
 
-                    node_t * cRightDown = treeCopy(expr_node->right);  //TODO r^2 instead of r*r
+                    node_t * cRightDown = treeCopy(expr_node->right);
 
                     return  newOprNode(DIV,
                                 newOprNode(SUB,
@@ -368,3 +368,76 @@ void diffDump(diff_context_t * diff)
     logPrint(LOG_DEBUG, "<h2>---DIFFERENTIATOR DUMP END---</h2>\n");
 }
 
+static void dumpToTEXrecursive(FILE * out_file, diff_context_t * diff, node_t * node);
+
+void dumpToTEX(FILE * out_file, diff_context_t * diff, node_t * node)
+{
+    fprintf(out_file, "$ ");
+
+    dumpToTEXrecursive(out_file, diff, node);
+
+    fprintf(out_file, " $\n");
+
+}
+
+
+static void dumpToTEXrecursive(FILE * out_file, diff_context_t * diff, node_t * node)
+{
+    if (type_(node) == NUM){
+        fprintf(out_file, "(%lg)", val_(node).number);
+        return;
+    }
+
+    if (type_(node) == VAR){
+        fprintf(out_file, "(%s)", diff->vars[val_(node).op].name);
+        return;
+    }
+
+    enum oper op_num = val_(node).op;
+    if (opers[op_num].binary){
+        switch(op_num){
+            case DIV:
+                fprintf(out_file, "\\frac{");
+
+                dumpToTEXrecursive(out_file, diff, node->left);
+                fprintf(out_file, "}{");
+                dumpToTEXrecursive(out_file, diff, node->right);
+
+                fprintf(out_file, "}");
+                break;
+
+            case POW:
+                fprintf(out_file, "(");
+
+                dumpToTEXrecursive(out_file, diff, node->left);
+                fprintf(out_file, "^{");
+                dumpToTEXrecursive(out_file, diff, node->right);
+                fprintf(out_file, "}");
+
+                fprintf(out_file, ")");
+                break;
+
+            default:
+                fprintf(out_file, "(");
+
+                dumpToTEXrecursive(out_file, diff, node->left);
+                fprintf(out_file, " %s ", opers[op_num].name);
+                dumpToTEXrecursive(out_file, diff, node->right);
+
+                fprintf(out_file, ")");
+                break;
+        }
+    }
+    else {
+        switch(op_num) {
+            default:
+                fprintf(out_file, "(");
+
+                fprintf(out_file, "%s", opers[op_num].name);
+                dumpToTEXrecursive(out_file, diff, node->left);
+
+                fprintf(out_file, ")");
+                break;
+        }
+    }
+}

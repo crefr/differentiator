@@ -85,6 +85,8 @@ node_t * makeDerivative(diff_context_t * diff, node_t * expr_node, unsigned int 
 
 bool foldConstants(node_t * node, double * ans);
 
+void dumpToTEX(FILE * out_file, diff_context_t * diff, node_t * node);
+
 /// @brief initializes some stuff
 void diffInit(diff_context_t * diff);
 

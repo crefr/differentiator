@@ -30,6 +30,10 @@ int main()
 
     treeDumpGraph(derivative, exprElemToStr);
 
+    FILE * tex_file = fopen("test.md", "w");
+    dumpToTEX(tex_file, &diff, derivative);
+    fclose(tex_file);
+
 //     setVariables(&diff);
 //
 //     double answer = evaluate(&diff, tree);
