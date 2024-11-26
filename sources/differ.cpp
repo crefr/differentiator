@@ -144,6 +144,8 @@ bool foldConstants(node_t * node, double * ans)
 
 static node_t * delNeutralInCommutatives(node_t * node, node_t * parent);
 
+static node_t * delNeutralInNonCommutatives(node_t * node, node_t * parent);
+
 node_t * deleteNeutral(node_t * node, node_t * parent)
 {
     assert(node);
@@ -160,14 +162,13 @@ node_t * deleteNeutral(node_t * node, node_t * parent)
     if (opers[val_(node).op].commutative)
         return delNeutralInCommutatives(node, parent);
 
-
-
-    return node;
+    return delNeutralInNonCommutatives(node, parent);
 }
 
 static node_t * delNeutralInCommutatives(node_t * node, node_t * parent)
 {
     assert(node);
+    assert(type_(node) == OPR);
 
     node_t * cur_node = node->left;
     node_t * another_node = node->right;
@@ -214,6 +215,61 @@ static node_t * delNeutralInCommutatives(node_t * node, node_t * parent)
         }
         else
             cur_node = NULL;
+    }
+    return node;
+}
+
+static node_t * delNeutralInNonCommutatives(node_t * node, node_t * parent)
+{
+    assert(node);
+    assert(type_(node) == OPR);
+
+    node_t * left  = node->left;
+    node_t * right = node->right;
+
+    switch (val_(node).op){
+        case SUB:
+            if (type_(right) == NUM){
+                if (val_(right).number == 0.){
+                    delNode(right);
+                    delNode(node);
+
+                    left->parent = parent;
+
+                    return left;
+                }
+            }
+            break;
+        case POW:
+            if (type_(right) == NUM){
+                if (val_(right).number == 1.){
+                    delNode(right);
+                    delNode(node);
+
+                    left->parent = parent;
+
+                    return left;
+                }
+                else if (val_(right).number == 0.){
+                    treeDestroy(node);
+
+                    node_t * new_node = newNumNode(1.);
+                    new_node->parent = parent;
+
+                    return new_node;
+                }
+            }
+            if (type_(left) == NUM){
+                if (val_(left).number == 1. || val_(left).number == 0.){
+                    treeDestroy(right);
+                    delNode(node);
+
+                    left->parent = parent;
+
+                    return left;
+                }
+            }
+            break;
     }
     return node;
 }
@@ -497,7 +553,7 @@ static void dumpToTEXrecursive(FILE * out_file, diff_context_t * diff, node_t * 
                 fprintf(out_file, "(");
 
                 dumpToTEXrecursive(out_file, diff, node->left);
-                fprintf(out_file, " \\cdot ", opers[op_num].name);
+                fprintf(out_file, " \\cdot ");
                 dumpToTEXrecursive(out_file, diff, node->right);
 
                 fprintf(out_file, ")");
