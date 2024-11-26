@@ -136,6 +136,45 @@ bool foldConstants(node_t * node, double * ans)
     return false;
 }
 
+node_t * deleteNeutral(node_t * node, node_t * parent)
+{
+    if (node == NULL)
+        return NULL;
+
+    if (type_(node) != OPR)
+        return node;
+
+    node->left  = deleteNeutral(node->left,  node);
+    node->right = deleteNeutral(node->right, node);
+
+    node_t * cur_node = node->left;
+    node_t * another_node = node->right;
+    while (cur_node != NULL) {
+        switch (val_(node).op){
+            case MUL:
+                if (type_(cur_node) == NUM){
+                    if (val_(cur_node).number == 1.){
+                        delNode(cur_node);
+                        delNode(node);
+
+                        another_node->parent = parent;
+                        return another_node;
+                    }
+                }
+            default:
+                break;
+        }
+
+        if (cur_node == node->left){
+            cur_node     = node->right;
+            another_node = node->left;
+        }
+        else
+            cur_node = NULL;
+    }
+    return node;
+}
+
 const size_t BUFFER_LEN = 32;
 
 node_t * readEquationPrefix(diff_context_t * diff, FILE * input_file)
@@ -380,7 +419,6 @@ void dumpToTEX(FILE * out_file, diff_context_t * diff, node_t * node)
 
 }
 
-
 static void dumpToTEXrecursive(FILE * out_file, diff_context_t * diff, node_t * node)
 {
     if (type_(node) == NUM){
@@ -411,6 +449,16 @@ static void dumpToTEXrecursive(FILE * out_file, diff_context_t * diff, node_t * 
                 fprintf(out_file, "^{");
                 dumpToTEXrecursive(out_file, diff, node->right);
                 fprintf(out_file, "}");
+                break;
+
+            case MUL:
+                fprintf(out_file, "(");
+
+                dumpToTEXrecursive(out_file, diff, node->left);
+                fprintf(out_file, " \\cdot ", opers[op_num].name);
+                dumpToTEXrecursive(out_file, diff, node->right);
+
+                fprintf(out_file, ")");
                 break;
 
             default:
