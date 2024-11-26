@@ -153,7 +153,26 @@ node_t * deleteNeutral(node_t * node, node_t * parent)
         switch (val_(node).op){
             case MUL:
                 if (type_(cur_node) == NUM){
+                    /* x*1 = x */
                     if (val_(cur_node).number == 1.){
+                        delNode(cur_node);
+                        delNode(node);
+
+                        another_node->parent = parent;
+                        return another_node;
+                    }
+                    /* x*0 = 0 */
+                    else if (val_(cur_node).number == 0.){
+                        treeDestroy(another_node);
+                        delNode(node);
+
+                        cur_node->parent = parent;
+                        return cur_node;
+                    }
+                }
+            case ADD:
+                if (type_(cur_node) == NUM){
+                    if (val_(cur_node).number == 0.){
                         delNode(cur_node);
                         delNode(node);
 
