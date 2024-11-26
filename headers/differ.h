@@ -56,17 +56,18 @@ typedef struct {
     const char * name;
     enum oper num;
     bool binary;
+    bool commutative;
 } oper_t;
 
 const oper_t opers[] = { //TODO make it independent of constant places in enum oper
-    {.name = "+"  , .num = ADD, .binary = true},
-    {.name = "-"  , .num = SUB, .binary = true},
-    {.name = "*"  , .num = MUL, .binary = true},
-    {.name = "/"  , .num = DIV, .binary = true},
-    {.name = "^"  , .num = POW, .binary = true},
-    {.name = "sin", .num = SIN, .binary = false},
-    {.name = "cos", .num = COS, .binary = false},
-    {.name = "tan", .num = TAN, .binary = false}
+    {.name = "+"  , .num = ADD, .binary = true,  .commutative = true },
+    {.name = "-"  , .num = SUB, .binary = true,  .commutative = false},
+    {.name = "*"  , .num = MUL, .binary = true,  .commutative = true },
+    {.name = "/"  , .num = DIV, .binary = true,  .commutative = false},
+    {.name = "^"  , .num = POW, .binary = true,  .commutative = false},
+    {.name = "sin", .num = SIN, .binary = false, .commutative = false},
+    {.name = "cos", .num = COS, .binary = false, .commutative = false},
+    {.name = "tan", .num = TAN, .binary = false, .commutative = false}
 };
 const size_t opers_size = sizeof(opers) / sizeof(*opers);
 

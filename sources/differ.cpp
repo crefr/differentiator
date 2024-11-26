@@ -32,6 +32,8 @@ void diffInit(diff_context_t * diff)
 
 void diffDtor(diff_context_t * diff)
 {
+    assert(diff);
+
     tableDtor(&(diff->oper_table));
     tableDtor(&(diff-> var_table));
 }
@@ -48,6 +50,7 @@ static void fillOperTable(diff_context_t * diff)
 double evaluate(diff_context_t * diff, node_t * node)
 {
     assert(node);
+    assert(diff);
 
     logPrint(LOG_DEBUG, "entered evaluate for root %p\n", node);
     logPrint(LOG_DEBUG_PLUS, "\tvalue: %lg, type: %d\n", val_(node).number, type_(node));
@@ -83,6 +86,8 @@ double evaluate(diff_context_t * diff, node_t * node)
 
 bool foldConstants(node_t * node, double * ans)
 {
+    assert(node);
+
     if (type_(node) == VAR)
         return false;
 
@@ -136,8 +141,13 @@ bool foldConstants(node_t * node, double * ans)
     return false;
 }
 
+
+static node_t * delNeutralInCommutatives(node_t * node, node_t * parent);
+
 node_t * deleteNeutral(node_t * node, node_t * parent)
 {
+    assert(node);
+
     if (node == NULL)
         return NULL;
 
@@ -147,12 +157,25 @@ node_t * deleteNeutral(node_t * node, node_t * parent)
     node->left  = deleteNeutral(node->left,  node);
     node->right = deleteNeutral(node->right, node);
 
+    if (opers[val_(node).op].commutative)
+        return delNeutralInCommutatives(node, parent);
+
+
+
+    return node;
+}
+
+static node_t * delNeutralInCommutatives(node_t * node, node_t * parent)
+{
+    assert(node);
+
     node_t * cur_node = node->left;
     node_t * another_node = node->right;
     while (cur_node != NULL) {
-        switch (val_(node).op){
-            case MUL:
-                if (type_(cur_node) == NUM){
+        if (type_(cur_node) == NUM){
+            switch (val_(node).op){
+                case MUL:
+                    logPrint(LOG_DEBUG_PLUS, "in mul case...\n");
                     /* x*1 = x */
                     if (val_(cur_node).number == 1.){
                         delNode(cur_node);
@@ -169,9 +192,9 @@ node_t * deleteNeutral(node_t * node, node_t * parent)
                         cur_node->parent = parent;
                         return cur_node;
                     }
-                }
-            case ADD:
-                if (type_(cur_node) == NUM){
+                    break;
+                case ADD:
+                    logPrint(LOG_DEBUG_PLUS, "in add case...\n");
                     if (val_(cur_node).number == 0.){
                         delNode(cur_node);
                         delNode(node);
@@ -179,9 +202,10 @@ node_t * deleteNeutral(node_t * node, node_t * parent)
                         another_node->parent = parent;
                         return another_node;
                     }
-                }
-            default:
-                break;
+                    break;
+                default:
+                    break;
+            }
         }
 
         if (cur_node == node->left){
@@ -435,7 +459,6 @@ void dumpToTEX(FILE * out_file, diff_context_t * diff, node_t * node)
     dumpToTEXrecursive(out_file, diff, node);
 
     fprintf(out_file, " $\n");
-
 }
 
 static void dumpToTEXrecursive(FILE * out_file, diff_context_t * diff, node_t * node)
