@@ -20,26 +20,26 @@ int main()
     treeSetDumpMode(DUMP_MEDIUM);
 
     node_t * tree = readEquationPrefix(&diff, stdin);
-    // node_t * derivative = makeDerivative(&diff, tree, 0);
+    node_t * derivative = makeDerivative(&diff, tree, 0);
 
-    treeDumpGraph(tree, exprElemToStr);
+    // treeDumpGraph(tree, exprElemToStr);
     // treeDumpGraph(derivative, exprElemToStr);
 
-    double temp = 0;
-    foldConstants(tree, &temp);
-    treeDumpGraph(tree, exprElemToStr);
+    tree = simplifyExpression(tree);
+    derivative = simplifyExpression(derivative);
 
-    tree = deleteNeutral(tree, NULL);
     treeDumpGraph(tree, exprElemToStr);
+    treeDumpGraph(derivative, exprElemToStr);
 
     FILE * tex_file = fopen("test.md", "w");
     dumpToTEX(tex_file, &diff, tree);
+    dumpToTEX(tex_file, &diff, derivative);
     fclose(tex_file);
 
     diffDump(&diff);
 
     treeDestroy(tree);
-    // treeDestroy(derivative);
+    treeDestroy(derivative);
     diffDtor(&diff);
 
 

@@ -84,9 +84,11 @@ void setVariables(diff_context_t * diff);
 
 node_t * makeDerivative(diff_context_t * diff, node_t * expr_node, unsigned int var_index);
 
-bool foldConstants(node_t * node, double * ans);
+node_t * foldConstants(node_t * node, node_t * parent);
 
 node_t * deleteNeutral(node_t * node, node_t * parent);
+
+node_t * simplifyExpression(node_t * node);
 
 void dumpToTEX(FILE * out_file, diff_context_t * diff, node_t * node);
 

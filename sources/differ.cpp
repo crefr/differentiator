@@ -84,63 +84,64 @@ double evaluate(diff_context_t * diff, node_t * node)
     return 0.;
 }
 
-bool foldConstants(node_t * node, double * ans)
+node_t * simplifyExpression(node_t * node)
 {
-    assert(node);
+    node = foldConstants(node, NULL);
+    node = deleteNeutral(node, NULL);
+    node = foldConstants(node, NULL);
+
+    return node;
+}
+
+node_t * foldConstants(node_t * node, node_t * parent)
+{
+    if (node == NULL)
+        return NULL;
 
     if (type_(node) == VAR)
-        return false;
+        return node;
 
-    if (type_(node) == NUM){
-        *ans = val_(node).number;
-        return true;
-    }
+    if (type_(node) == NUM)
+        return node;
 
-    if (opers[val_(node).op].binary){ //TODO make the same for unary
-        double  left_val = 0;
-        double right_val = 0;
+    node->left  = foldConstants(node->left , node);
+    node->right = foldConstants(node->right, node);
 
-        bool  left_is_const = foldConstants(node->left , &left_val);
-        bool right_is_const = foldConstants(node->right, &right_val);
+    if (opers[val_(node).op].binary){
+        if (type_(node->left) == NUM && type_(node->right) == NUM){
+            double  left_val = val_(node->left ).number;
+            double right_val = val_(node->right).number;
 
-        if (left_is_const){
-            treeDestroy(node->left);
-            node->left = newNumNode(left_val);
-            node->left->parent = node;
-        }
-        if (right_is_const){
-            treeDestroy(node->right);
-            node->right = newNumNode(right_val);
-            node->right->parent = node;
-        }
+            double new_val = 0.;
 
-        if (left_is_const && right_is_const){
             switch (val_(node).op){
                 case ADD:
-                    *ans = left_val + right_val;
+                    new_val = left_val + right_val;
                     break;
 
                 case SUB:
-                    *ans = left_val - right_val;
+                    new_val = left_val - right_val;
                     break;
 
                 case MUL:
-                    *ans = left_val * right_val;
+                    new_val = left_val * right_val;
                     break;
 
                 case DIV:
-                    *ans = left_val / right_val;
+                    new_val = left_val / right_val;
                     break;
-
-                default:
-                    return false;
             }
-            return true;
+
+            treeDestroy(node);
+
+            node_t * new_node = newNumNode(new_val);
+            new_node->parent = parent;
+
+            return new_node;
         }
     }
-    return false;
+    return node;
 }
-
 
 static node_t * delNeutralInCommutatives(node_t * node, node_t * parent);
 
@@ -148,8 +149,6 @@ static node_t * delNeutralInNonCommutatives(node_t * node, node_t * parent);
 
 node_t * deleteNeutral(node_t * node, node_t * parent)
 {
-    assert(node);
-
     if (node == NULL)
         return NULL;
 
@@ -514,7 +513,7 @@ void dumpToTEX(FILE * out_file, diff_context_t * diff, node_t * node)
 
     dumpToTEXrecursive(out_file, diff, node);
 
-    fprintf(out_file, " $\n");
+    fprintf(out_file, " $\n\n");
 }
 
 static void dumpToTEXrecursive(FILE * out_file, diff_context_t * diff, node_t * node)
