@@ -384,12 +384,12 @@ void dumpToTEX(FILE * out_file, diff_context_t * diff, node_t * node)
 static void dumpToTEXrecursive(FILE * out_file, diff_context_t * diff, node_t * node)
 {
     if (type_(node) == NUM){
-        fprintf(out_file, "(%lg)", val_(node).number);
+        fprintf(out_file, "%lg", val_(node).number);
         return;
     }
 
     if (type_(node) == VAR){
-        fprintf(out_file, "(%s)", diff->vars[val_(node).op].name);
+        fprintf(out_file, "%s", diff->vars[val_(node).op].name);
         return;
     }
 
@@ -407,14 +407,10 @@ static void dumpToTEXrecursive(FILE * out_file, diff_context_t * diff, node_t * 
                 break;
 
             case POW:
-                fprintf(out_file, "(");
-
                 dumpToTEXrecursive(out_file, diff, node->left);
                 fprintf(out_file, "^{");
                 dumpToTEXrecursive(out_file, diff, node->right);
                 fprintf(out_file, "}");
-
-                fprintf(out_file, ")");
                 break;
 
             default:
@@ -430,13 +426,14 @@ static void dumpToTEXrecursive(FILE * out_file, diff_context_t * diff, node_t * 
     }
     else {
         switch(op_num) {
-            default:
-                fprintf(out_file, "(");
+            case COS: case SIN: case TAN:
+            fprintf(out_file, "\\%s ", opers[op_num].name);
+                dumpToTEXrecursive(out_file, diff, node->left);
+                break;
 
+            default:
                 fprintf(out_file, "%s", opers[op_num].name);
                 dumpToTEXrecursive(out_file, diff, node->left);
-
-                fprintf(out_file, ")");
                 break;
         }
     }
