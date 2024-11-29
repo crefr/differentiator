@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <math.h>
 
 #include "differ.h"
 #include "bintree.h"
@@ -9,12 +10,6 @@
 #include "hashtable.h"
 
 static void fillOperTable(diff_context_t * diff);
-
-static node_t * newOprNode(enum oper op_num, node_t * left, node_t * right);
-
-static node_t * newNumNode(double num);
-
-static node_t * newVarNode(unsigned int var_index);
 
 const size_t OPR_TABLE_SIZE = 32;
 
@@ -463,7 +458,7 @@ node_t * makeDerivative(diff_context_t * diff, node_t * expr_node, unsigned int 
     }
 }
 
-static node_t * newOprNode(enum oper op_num, node_t * left, node_t * right)
+node_t * newOprNode(enum oper op_num, node_t * left, node_t * right)
 {
     expr_elem_t operation = {};
     operation.type = OPR;
@@ -472,7 +467,7 @@ static node_t * newOprNode(enum oper op_num, node_t * left, node_t * right)
     return newNode(&operation, sizeof(operation), left, right, OPR_COLOR);
 }
 
-static node_t * newNumNode(double num)
+node_t * newNumNode(double num)
 {
     expr_elem_t number = {};
     number.type = NUM;
@@ -481,7 +476,7 @@ static node_t * newNumNode(double num)
     return newNode(&number, sizeof(number), NULL, NULL, NUM_COLOR);
 }
 
-static node_t * newVarNode(unsigned int var_index)
+node_t * newVarNode(unsigned int var_index)
 {
     expr_elem_t variable = {};
     variable.type = VAR;

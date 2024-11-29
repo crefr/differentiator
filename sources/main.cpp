@@ -7,6 +7,7 @@
 #include "differ.h"
 #include "bintree.h"
 #include "logger.h"
+#include "eq_parser.h"
 
 int main()
 {
@@ -19,13 +20,19 @@ int main()
 
     treeSetDumpMode(DUMP_MEDIUM);
 
-    node_t * tree = readEquationPrefix(&diff, stdin);
+    // node_t * tree       = readEquationPrefix(&diff, stdin);
+
+    char buffer[128] = {};
+    scanf("%[^\n]", buffer);
+
+    node_t * tree       = parseEquation(buffer);
+
     node_t * derivative = makeDerivative(&diff, tree, 0);
 
     // treeDumpGraph(tree, exprElemToStr);
     // treeDumpGraph(derivative, exprElemToStr);
 
-    tree = simplifyExpression(tree);
+    //tree = simplifyExpression(tree);
     derivative = simplifyExpression(derivative);
 
     treeDumpGraph(tree, exprElemToStr);

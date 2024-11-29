@@ -92,6 +92,12 @@ node_t * simplifyExpression(node_t * node);
 
 void dumpToTEX(FILE * out_file, diff_context_t * diff, node_t * node);
 
+node_t * newOprNode(enum oper op_num, node_t * left, node_t * right);
+
+node_t * newNumNode(double num);
+
+node_t * newVarNode(unsigned int var_index);
+
 /// @brief initializes some stuff
 void diffInit(diff_context_t * diff);
 
