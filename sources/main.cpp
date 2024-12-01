@@ -15,7 +15,7 @@ int main()
     logStart("logs/log.html", LOG_DEBUG_PLUS, LOG_HTML);
     logCancelBuffer();
 
-    diff_context_t diff ={};
+    diff_t diff ={};
     diffInit(&diff);
 
     treeSetDumpMode(DUMP_MEDIUM);
@@ -25,9 +25,12 @@ int main()
     char buffer[128] = {};
     scanf("%[^\n]", buffer);
 
-    node_t * tree       = parseEquation(buffer);
+    node_t * tree       = parseEquation(&diff, buffer);
+    treeDumpGraph(tree, exprElemToStr);
 
     node_t * derivative = makeDerivative(&diff, tree, 0);
+    treeDumpGraph(derivative, exprElemToStr);
+
 
     // treeDumpGraph(tree, exprElemToStr);
     // treeDumpGraph(derivative, exprElemToStr);
@@ -35,7 +38,6 @@ int main()
     //tree = simplifyExpression(tree);
     derivative = simplifyExpression(derivative);
 
-    treeDumpGraph(tree, exprElemToStr);
     treeDumpGraph(derivative, exprElemToStr);
 
     FILE * tex_file = fopen("test.md", "w");

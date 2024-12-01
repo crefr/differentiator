@@ -9,13 +9,13 @@
 #include "logger.h"
 #include "hashtable.h"
 
-static void fillOperTable(diff_context_t * diff);
+static void fillOperTable(diff_t * diff);
 
 const size_t OPR_TABLE_SIZE = 32;
 
 const size_t VAR_TABLE_SIZE = 32;
 
-void diffInit(diff_context_t * diff)
+void diffInit(diff_t * diff)
 {
     assert(diff);
 
@@ -25,7 +25,7 @@ void diffInit(diff_context_t * diff)
     fillOperTable(diff);
 }
 
-void diffDtor(diff_context_t * diff)
+void diffDtor(diff_t * diff)
 {
     assert(diff);
 
@@ -33,7 +33,7 @@ void diffDtor(diff_context_t * diff)
     tableDtor(&(diff-> var_table));
 }
 
-static void fillOperTable(diff_context_t * diff)
+static void fillOperTable(diff_t * diff)
 {
     assert(diff);
 
@@ -42,7 +42,7 @@ static void fillOperTable(diff_context_t * diff)
     }
 }
 
-double evaluate(diff_context_t * diff, node_t * node)
+double evaluate(diff_t * diff, node_t * node)
 {
     assert(node);
     assert(diff);
@@ -125,6 +125,13 @@ node_t * foldConstants(node_t * node, node_t * parent)
                 case DIV:
                     new_val = left_val / right_val;
                     break;
+
+                case POW:
+                    new_val = pow(left_val, right_val);
+                    break;
+
+                default:
+                    return node;
             }
 
             treeDestroy(node);
@@ -270,7 +277,7 @@ static node_t * delNeutralInNonCommutatives(node_t * node, node_t * parent)
 
 const size_t BUFFER_LEN = 32;
 
-node_t * readEquationPrefix(diff_context_t * diff, FILE * input_file)
+node_t * readEquationPrefix(diff_t * diff, FILE * input_file)
 {
     node_t * node = NULL;
 
@@ -302,21 +309,7 @@ node_t * readEquationPrefix(diff_context_t * diff, FILE * input_file)
         }
 
         else {
-            unsigned int var_index = 0;
-
-            name_t * variable = tableLookup(&(diff->var_table), buffer);
-            if (variable == NULL){
-                tableInsert(&(diff->var_table), buffer, &(diff->var_num), sizeof(diff->var_num));
-                var_index = diff->var_num;
-
-                strncpy(diff->vars[var_index].name, buffer, VAR_NAME_MAX_LEN - 1);
-
-                diff->var_num++;
-            }
-            else {
-                var_index = *(unsigned int *)(variable->data);
-            }
-            node = newVarNode(var_index);
+            node = getVarNode(diff, buffer);
         }
     }
 
@@ -325,7 +318,7 @@ node_t * readEquationPrefix(diff_context_t * diff, FILE * input_file)
     return node;
 }
 
-void setVariables(diff_context_t * diff)
+void setVariables(diff_t * diff)
 {
     for (size_t var_index = 0; var_index < diff->var_num; var_index++){
         printf("enter value of variable '%s':\n", diff->vars[var_index].name);
@@ -357,7 +350,7 @@ void exprElemToStr(char * str, void * data)
     }
 }
 
-node_t * makeDerivative(diff_context_t * diff, node_t * expr_node, unsigned int var_index)
+node_t * makeDerivative(diff_t * diff, node_t * expr_node, unsigned int var_index)
 {
     assert(diff);
     assert(expr_node);
@@ -485,7 +478,7 @@ node_t * newVarNode(unsigned int var_index)
     return newNode(&variable, sizeof(variable), NULL, NULL, VAR_COLOR);
 }
 
-void diffDump(diff_context_t * diff)
+void diffDump(diff_t * diff)
 {
     logPrint(LOG_DEBUG, "<h2>-----DIFFERENTIATOR DUMP-----</h2>\n");
 
@@ -500,9 +493,9 @@ void diffDump(diff_context_t * diff)
     logPrint(LOG_DEBUG, "<h2>---DIFFERENTIATOR DUMP END---</h2>\n");
 }
 
-static void dumpToTEXrecursive(FILE * out_file, diff_context_t * diff, node_t * node);
+static void dumpToTEXrecursive(FILE * out_file, diff_t * diff, node_t * node);
 
-void dumpToTEX(FILE * out_file, diff_context_t * diff, node_t * node)
+void dumpToTEX(FILE * out_file, diff_t * diff, node_t * node)
 {
     fprintf(out_file, "$ ");
 
@@ -511,7 +504,7 @@ void dumpToTEX(FILE * out_file, diff_context_t * diff, node_t * node)
     fprintf(out_file, " $\n\n");
 }
 
-static void dumpToTEXrecursive(FILE * out_file, diff_context_t * diff, node_t * node)
+static void dumpToTEXrecursive(FILE * out_file, diff_t * diff, node_t * node)
 {
     if (type_(node) == NUM){
         fprintf(out_file, "%lg", val_(node).number);
@@ -577,4 +570,25 @@ static void dumpToTEXrecursive(FILE * out_file, diff_context_t * diff, node_t * 
                 break;
         }
     }
+}
+
+node_t * getVarNode(diff_t * diff, char * var_name)
+{
+    unsigned int var_index = 0;
+
+    name_t * variable = tableLookup(&(diff->var_table), var_name);
+
+    if (variable == NULL){
+        tableInsert(&(diff->var_table), var_name, &(diff->var_num), sizeof(diff->var_num));
+        var_index = diff->var_num;
+
+        strncpy(diff->vars[var_index].name, var_name, VAR_NAME_MAX_LEN - 1);
+
+        diff->var_num++;
+    }
+    else {
+        var_index = *(unsigned int *)(variable->data);
+    }
+
+    return newVarNode(var_index);
 }

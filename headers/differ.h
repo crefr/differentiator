@@ -50,7 +50,7 @@ typedef struct {
 
     var_t vars[MAX_VAR_NUM];
     unsigned int var_num;
-} diff_context_t;
+} diff_t;
 
 typedef struct {
     const char * name;
@@ -72,17 +72,17 @@ const oper_t opers[] = { //TODO make it independent of constant places in enum o
 const size_t opers_size = sizeof(opers) / sizeof(*opers);
 
 /// @brief evaluates the value of tree with the node as a root
-double evaluate(diff_context_t * diff, node_t * node);
+double evaluate(diff_t * diff, node_t * node);
 
 /// @brief reads equation in prefix form from the input_file
-node_t * readEquationPrefix(diff_context_t * diff, FILE * input_file);
+node_t * readEquationPrefix(diff_t * diff, FILE * input_file);
 
 /// @brief make string about expression element, used in dump
 void exprElemToStr(char * str, void * data);
 
-void setVariables(diff_context_t * diff);
+void setVariables(diff_t * diff);
 
-node_t * makeDerivative(diff_context_t * diff, node_t * expr_node, unsigned int var_index);
+node_t * makeDerivative(diff_t * diff, node_t * expr_node, unsigned int var_index);
 
 node_t * foldConstants(node_t * node, node_t * parent);
 
@@ -90,7 +90,7 @@ node_t * deleteNeutral(node_t * node, node_t * parent);
 
 node_t * simplifyExpression(node_t * node);
 
-void dumpToTEX(FILE * out_file, diff_context_t * diff, node_t * node);
+void dumpToTEX(FILE * out_file, diff_t * diff, node_t * node);
 
 node_t * newOprNode(enum oper op_num, node_t * left, node_t * right);
 
@@ -98,12 +98,14 @@ node_t * newNumNode(double num);
 
 node_t * newVarNode(unsigned int var_index);
 
+node_t * getVarNode(diff_t * diff, char * var_name);
+
 /// @brief initializes some stuff
-void diffInit(diff_context_t * diff);
+void diffInit(diff_t * diff);
 
-void diffDtor(diff_context_t * diff);
+void diffDtor(diff_t * diff);
 
-void diffDump(diff_context_t * diff);
+void diffDump(diff_t * diff);
 
 const uint32_t NUM_COLOR = 0xAAFFAAFF;
 const uint32_t VAR_COLOR = 0xFFAAAAFF;

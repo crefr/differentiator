@@ -1,23 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <assert.h>
 
 #include "bintree.h"
 #include "differ.h"
 
-node_t * getE(const char ** str);
+static node_t * getExpr   (diff_t * diff, const char ** str);
 
-node_t * getT(const char ** str);
+static node_t * getMulDiv (diff_t * diff, const char ** str);
 
-node_t * getP(const char ** str);
+static node_t * getPrimary(diff_t * diff, const char ** str);
 
-node_t * getV(const char ** str);
+static node_t * getVar    (diff_t * diff, const char ** str);
 
-node_t * getN(const char ** str);
+static node_t * getNumber (diff_t * diff, const char ** str);
 
-node_t * parseEquation(const char * str)
+node_t * parseEquation(diff_t * diff, const char * str)
 {
-    node_t * node = getE(&str);
+    assert(str);
+
+    node_t * node = getExpr(diff, &str);
 
     if (*str != '\0'){
         fprintf(stderr, "SYNTAX ERROR: expected end of the equation but scanned '%c'\n", *str);
@@ -27,15 +30,17 @@ node_t * parseEquation(const char * str)
     return node;
 }
 
-node_t * getE(const char ** str)
+static node_t * getExpr(diff_t * diff, const char ** str)
 {
-    node_t * node = getT(str);
+    assert(str);
+
+    node_t * node = getMulDiv(diff, str);
 
     while (**str == '+' || **str == '-'){
         int oper = **str;
         (*str)++;
 
-        node_t * node2 = getT(str);
+        node_t * node2 = getMulDiv(diff, str);
 
         if (oper == '+')
             node = newOprNode(ADD, node, node2);
@@ -47,15 +52,17 @@ node_t * getE(const char ** str)
     return node;
 }
 
-node_t * getT(const char ** str)
+static node_t * getMulDiv(diff_t * diff, const char ** str)
 {
-    node_t * node = getP(str);
+    assert(str);
+
+    node_t * node = getPrimary(diff, str);
 
     while (**str == '*' || **str == '/'){
         int op = **str;
         (*str)++;
 
-        node_t * node2 = getP(str);
+        node_t * node2 = getPrimary(diff, str);
 
         if (op == '*')
             node = newOprNode(MUL, node, node2);
@@ -67,12 +74,14 @@ node_t * getT(const char ** str)
     return node;
 }
 
-node_t * getP(const char ** str)
+static node_t * getPrimary(diff_t * diff, const char ** str)
 {
+    assert(str);
+
     if (**str == '('){
         (*str)++;
 
-        node_t * node = getE(str);
+        node_t * node = getExpr(diff, str);
 
         if (**str != ')'){
             printf("scanned: %c, expected ')'\n", **str);
@@ -82,11 +91,17 @@ node_t * getP(const char ** str)
 
         return node;
     }
-    return getN(str);
+
+    if ('a' <= **str && **str <= 'z' || **str == '_')
+        return getVar(diff, str);
+
+    return getNumber(diff, str);
 }
 
-node_t * getN(const char ** str)
+static node_t * getNumber(diff_t * diff, const char ** str)
 {
+    assert(str);
+
     double val = 0;
 
     while ('0' <= **str && **str <= '9'){
@@ -94,4 +109,21 @@ node_t * getN(const char ** str)
         (*str)++;
     }
     return newNumNode(val);
+}
+
+static node_t * getVar(diff_t * diff, const char ** str)
+{
+    assert(str);
+
+    char   var_name[VAR_NAME_MAX_LEN] = "";
+    size_t name_index = 0;
+
+    while ( (name_index < VAR_NAME_MAX_LEN - 1) &&
+            (('a' <= **str && **str <= 'z') || (**str == '_') || ('0' <= **str && **str <= '9'))){
+        var_name[name_index] = **str;
+        name_index++;
+        (*str)++;
+    }
+
+    return getVarNode(diff, var_name);
 }

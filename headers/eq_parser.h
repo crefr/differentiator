@@ -4,6 +4,6 @@
 #include "bintree.h"
 #include "differ.h"
 
-node_t * parseEquation(const char * str);
+node_t * parseEquation(diff_t * diff, const char * str);
 
 #endif
