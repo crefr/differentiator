@@ -7,6 +7,8 @@
 
 #include "bintree.h"
 #include "differ.h"
+#include "eq_parser.h"
+#include "logger.h"
 
 typedef enum {
     SUCCESS = 0,
@@ -24,15 +26,17 @@ static parser_context parserInit(const char * string);
 
 static void syntaxError(const char * expected, char real);
 
-static bool getName(char * name, parser_context * context, size_t name_max_len);
-
 static node_t * getExpr   (diff_t * diff, parser_context * context);
 
 static node_t * getMulDiv (diff_t * diff, parser_context * context);
 
 static node_t * getPrimary(diff_t * diff, parser_context * context);
 
+static node_t * getFunc(diff_t * diff, parser_context * context);
+
 static node_t * getVar    (diff_t * diff, parser_context * context);
+
+static bool getName(char * name, parser_context * context, size_t name_max_len);
 
 static node_t * getNumber (diff_t * diff, parser_context * context);
 
@@ -58,6 +62,11 @@ node_t * parseEquation(diff_t * diff, const char * string)
 
     node_t * node = getExpr(diff, &context);
 
+    if (node == NULL){
+        fprintf(stderr, "failed to parse expression\n");
+        return NULL;
+    }
+
     if (*(context.cur_str) != '\0'){
         syntaxError("end of the string ('\\0')", *(context.cur_str));
         return NULL;
@@ -73,11 +82,17 @@ static node_t * getExpr(diff_t * diff, parser_context * context)
 
     node_t * node = getMulDiv(diff, context);
 
+    if (context->status == HARD_ERROR)
+        return NULL;
+
     while (*(context->cur_str) == '+' || *(context->cur_str) == '-'){
         int oper = *(context->cur_str);
         (context->cur_str)++;
 
         node_t * node2 = getMulDiv(diff, context);
+
+        if (context->status == HARD_ERROR)
+            return NULL;
 
         if (oper == '+')
             node = newOprNode(ADD, node, node2);
@@ -96,11 +111,17 @@ static node_t * getMulDiv(diff_t * diff, parser_context * context)
 
     node_t * node = getPrimary(diff, context);
 
+    if (context->status == HARD_ERROR)
+        return NULL;
+
     while (*(context->cur_str) == '*' || *(context->cur_str) == '/'){
         int op = *(context->cur_str);
         (context->cur_str)++;
 
         node_t * node2 = getPrimary(diff, context);
+
+        if (context->status == HARD_ERROR)
+            return NULL;
 
         if (op == '*')
             node = newOprNode(MUL, node, node2);
@@ -123,20 +144,37 @@ static node_t * getPrimary(diff_t * diff, parser_context * context)
         node_t * node = getExpr(diff, context);
 
         if (*(context->cur_str) != ')'){
+            context->status = HARD_ERROR;
             syntaxError(")", *(context->cur_str));
+
             return NULL;
         }
 
-        (context->cur_str)++;
+        context->cur_str++;
 
         return node;
     }
 
+    node_t * func = getFunc(diff, context);
+
+    if (context->status == SUCCESS)
+        return func;
+
+    else if (context->status == HARD_ERROR)
+        return NULL;
+
     node_t * var = getVar(diff, context);
-    if (var != NULL)
+    if (context->status == SUCCESS)
         return var;
 
-    return getNumber(diff, context);
+    else if (context->status == HARD_ERROR)
+        return NULL;
+
+    node_t * number = getNumber(diff, context);
+    if (context->status == SUCCESS)
+        return number;
+
+    return NULL;
 }
 
 static node_t * getNumber(diff_t * diff, parser_context * context)
@@ -154,9 +192,12 @@ static node_t * getNumber(diff_t * diff, parser_context * context)
     const char * end = context->cur_str;
 
     if (start == end){
+        context->status = HARD_ERROR;
         syntaxError("digit ('0'-'9')", *(context->cur_str));
         return NULL;
     }
+
+    context->status = SUCCESS;
 
     return newNumNode(val);
 }
@@ -172,8 +213,12 @@ static node_t * getVar(diff_t * diff, parser_context * context)
 
     if (!getName(var_name, context, NAME_MAX_LEN)){
         context->cur_str = start;
+        context->status  = SOFT_ERROR;
+
         return NULL;
     }
+
+    context->status = SUCCESS;
 
     return getVarNode(diff, var_name);
 }
@@ -183,31 +228,57 @@ static node_t * getFunc(diff_t * diff, parser_context * context)
     assert(diff);
     assert(context);
 
+    logPrint(LOG_DEBUG_PLUS, "entered getFunc(), cur_str = '%s'\n", context->cur_str);
+
     char func_name[NAME_MAX_LEN] = "";
 
     const char * start = context->cur_str;
 
     if (!getName(func_name, context, NAME_MAX_LEN)){
         context->cur_str = start;
+        context->status = SOFT_ERROR;
+
         return NULL;
     }
 
     if (*(context->cur_str) != '('){
         context->cur_str = start;
+        context->status = SOFT_ERROR;
+
         return NULL;
     }
+
+    context->cur_str++;
 
     name_t * func = tableLookup(&(diff->oper_table), func_name);
     if (func == NULL){
         syntaxError("one of the functions", 'n');   //TODO - refactor syntaxError
-        exit(1);
-        // return NULL;
+        context->status = HARD_ERROR;
+
+        return NULL;
     }
 
-    node_t * arg_node = getExpr(diff, context);
-    if (arg_node == NULL){
-        syntaxError("argument", 'h');
+    node_t * arg_tree = getExpr(diff, context);
+    if (context->status != SUCCESS)
+        return NULL;
+
+    if (*(context->cur_str) != ')'){
+        treeDestroy(arg_tree);
+
+        syntaxError(")", *(context->cur_str));
+        context->status = HARD_ERROR;
+
+        return NULL;
     }
+
+    context->cur_str++;
+
+    oper_t * operation = (oper_t *)(func->data);
+    enum oper op_num = operation->num;
+
+    context->status = SUCCESS;
+
+    return newOprNode(op_num, arg_tree, NULL);
 }
 
 static bool getName(char * name, parser_context * context, size_t name_max_len)
@@ -237,7 +308,6 @@ static bool getName(char * name, parser_context * context, size_t name_max_len)
 static void syntaxError(const char * expected, char real)
 {
     assert(expected);
-    assert(real);
 
     if (real == '\0')
         fprintf(stderr, "SYNTAX ERROR: expected %s, but got end of the string ('\\0')\n", expected);
