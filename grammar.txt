@@ -1,7 +1,9 @@
 <RESULT>  ::= <Expr>
 
 <Expr>    ::= <MulDiv>  (("+" | "-") <MulDiv>)*
-<MulDiv>  ::= <Primary> (("*" | "/") <Primary>)*
+<MulDiv>  ::= <Power> (("*" | "/") <Power>)*
+
+<Power>   ::= <Primary> ("^" <Power>)*
 <Primary> ::= "(" <Expr> ")" | <Func> | <Var> | <Number>
 
 <Func>	  ::= <Name> "(" <Expr> ")"

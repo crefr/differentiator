@@ -30,6 +30,8 @@ static node_t * getExpr   (diff_t * diff, parser_context * context);
 
 static node_t * getMulDiv (diff_t * diff, parser_context * context);
 
+static node_t * getPower(diff_t * diff, parser_context * context);
+
 static node_t * getPrimary(diff_t * diff, parser_context * context);
 
 static node_t * getFunc(diff_t * diff, parser_context * context);
@@ -109,7 +111,7 @@ static node_t * getMulDiv(diff_t * diff, parser_context * context)
     assert(diff);
     assert(context);
 
-    node_t * node = getPrimary(diff, context);
+    node_t * node = getPower(diff, context);
 
     if (context->status == HARD_ERROR)
         return NULL;
@@ -118,7 +120,7 @@ static node_t * getMulDiv(diff_t * diff, parser_context * context)
         int op = *(context->cur_str);
         (context->cur_str)++;
 
-        node_t * node2 = getPrimary(diff, context);
+        node_t * node2 = getPower(diff, context);
 
         if (context->status == HARD_ERROR)
             return NULL;
@@ -131,6 +133,31 @@ static node_t * getMulDiv(diff_t * diff, parser_context * context)
     }
 
     return node;
+}
+
+static node_t * getPower(diff_t * diff, parser_context * context)
+{
+    assert(diff);
+    assert(context);
+
+    node_t * node = getPrimary(diff, context);
+
+    if (context->status == HARD_ERROR)
+        return NULL;
+
+    while (*(context->cur_str) == '^'){
+        (context->cur_str)++;
+
+        node_t * node2 = getPower(diff, context);
+
+        if (context->status == HARD_ERROR)
+            return NULL;
+
+        node = newOprNode(POW, node, node2);
+    }
+
+    return node;
+
 }
 
 static node_t * getPrimary(diff_t * diff, parser_context * context)
