@@ -35,10 +35,10 @@ typedef struct {
     } val;
 } expr_elem_t;
 
-const size_t VAR_NAME_MAX_LEN = 8;
+const size_t NAME_MAX_LEN = 64;
 
 typedef struct {
-    char name[VAR_NAME_MAX_LEN];
+    char name[NAME_MAX_LEN];
     double value;
 } var_t;
 

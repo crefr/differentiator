@@ -582,7 +582,7 @@ node_t * getVarNode(diff_t * diff, char * var_name)
         tableInsert(&(diff->var_table), var_name, &(diff->var_num), sizeof(diff->var_num));
         var_index = diff->var_num;
 
-        strncpy(diff->vars[var_index].name, var_name, VAR_NAME_MAX_LEN - 1);
+        strncpy(diff->vars[var_index].name, var_name, NAME_MAX_LEN - 1);
 
         diff->var_num++;
     }
