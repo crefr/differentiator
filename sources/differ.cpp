@@ -11,6 +11,8 @@
 
 static void fillOperTable(diff_t * diff);
 
+static size_t countVars(node_t * node, unsigned int var_index);
+
 const size_t OPR_TABLE_SIZE = 32;
 
 const size_t VAR_TABLE_SIZE = 32;
@@ -73,6 +75,12 @@ double evaluate(diff_t * diff, node_t * node)
             case TAN:
                 return tan(evaluate(diff, node->left));
 
+            case LN:
+                return log(evaluate(diff, node->left));
+
+            case LOG:
+                return log(evaluate(diff, node->right)) / log(evaluate(diff, node->left));
+
             case FAC:
                 return (double)factorial((long unsigned int)evaluate(diff, node->left));
 
@@ -89,6 +97,62 @@ double evaluate(diff_t * diff, node_t * node)
     }
 
     return 0.;
+}
+
+double calcOper(enum elem_type op_num, double left_val, double right_val)
+{
+    double new_val = 0.;
+
+    switch (op_num){
+        case ADD:
+            new_val = left_val + right_val;
+            break;
+
+        case SUB:
+            new_val = left_val - right_val;
+            break;
+
+        case MUL:
+            new_val = left_val * right_val;
+            break;
+
+        case DIV:
+            new_val = left_val / right_val;
+            break;
+
+        case POW:
+            new_val = pow(left_val, right_val);
+            break;
+
+        case FAC:
+            new_val = (double)factorial((long unsigned int)left_val);
+            break;
+
+        case SIN:
+            new_val = sin(left_val);
+            break;
+
+        case COS:
+            new_val = cos(left_val);
+            break;
+
+        case TAN:
+            new_val = tan(left_val);
+            break;
+
+        case LN:
+            new_val = log(left_val);
+            break;
+
+        case LOG:
+            new_val = log(right_val) / log(left_val);
+            break;
+
+        default:
+            fprintf(stderr, "CANNOT CALCULATE THIS OPERATION: %d\n", op_num);
+            exit(1);
+    }
+    return new_val;
 }
 
 node_t * simplifyExpression(node_t * node)
@@ -669,6 +733,27 @@ node_t * getVarNode(diff_t * diff, char * var_name)
     }
 
     return newVarNode(var_index);
+}
+
+static size_t countVars(node_t * node, unsigned int var_index)
+{
+    assert(diff);
+    assert(node);
+
+    if (type_(node) == NUM)
+        return 0;
+
+    if (type_(node) == VAR){
+        if (val_(node).var == var_index)
+            return 1;
+
+        return 0;
+    }
+
+    if (opers[val_(node).op].binary)
+        return countVars(node->left, var_index) + countVars(node->right, var_index);
+
+    return countVars(node->left, var_index);
 }
 
 long unsigned int factorial(long unsigned int number)

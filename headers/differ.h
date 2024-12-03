@@ -24,6 +24,8 @@ enum oper{
     SIN,
     COS,
     TAN,
+    LN,
+    LOG,
     FAC
 };
 
@@ -69,6 +71,8 @@ const oper_t opers[] = { //TODO make it independent of constant places in enum o
     {.name = "sin", .num = SIN, .binary = false, .commutative = false},
     {.name = "cos", .num = COS, .binary = false, .commutative = false},
     {.name = "tan", .num = TAN, .binary = false, .commutative = false},
+    {.name = "ln" , .num = LN , .binary = false, .commutative = false},
+    {.name = "log", .num = LOG, .binary = true,  .commutative = false},
     {.name = "!"  , .num = FAC, .binary = false, .commutative = false}
 };
 const size_t opers_size = sizeof(opers) / sizeof(*opers);
