@@ -12,8 +12,8 @@
 int main()
 {
     mkdir("logs", S_IFDIR);
-    logStart("logs/log.html", LOG_DEBUG_PLUS, LOG_HTML);
-    logCancelBuffer();
+    logStart("logs/log.html", LOG_DEBUG, LOG_HTML);
+    // logCancelBuffer();
 
     diff_t diff ={};
     diffInit(&diff);
@@ -31,24 +31,26 @@ int main()
     node_t * derivative = makeDerivative(&diff, tree, 0);
     treeDumpGraph(derivative, exprElemToStr);
 
+    node_t * taylor = taylorSeries(&diff, tree, 0, 0, 8);
+    treeDumpGraph(taylor, exprElemToStr);
 
-    // treeDumpGraph(tree, exprElemToStr);
-    // treeDumpGraph(derivative, exprElemToStr);
-
-    //tree = simplifyExpression(tree);
+    tree       = simplifyExpression(tree);
     derivative = simplifyExpression(derivative);
+    taylor     = simplifyExpression(taylor);
 
     treeDumpGraph(derivative, exprElemToStr);
 
     FILE * tex_file = fopen("test.md", "w");
     dumpToTEX(tex_file, &diff, tree);
     dumpToTEX(tex_file, &diff, derivative);
+    dumpToTEX(tex_file, &diff, taylor);
     fclose(tex_file);
 
     diffDump(&diff);
 
     treeDestroy(tree);
     treeDestroy(derivative);
+    treeDestroy(taylor);
     diffDtor(&diff);
 
 

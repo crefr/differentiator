@@ -47,7 +47,7 @@ double evaluate(diff_t * diff, node_t * node)
     assert(node);
     assert(diff);
 
-    logPrint(LOG_DEBUG, "entered evaluate for root %p\n", node);
+    logPrint(LOG_DEBUG_PLUS, "entered evaluate for root %p\n", node);
     logPrint(LOG_DEBUG_PLUS, "\tvalue: %lg, type: %d\n", val_(node).number, type_(node));
 
     if (type_(node) == OPR){
@@ -63,6 +63,18 @@ double evaluate(diff_t * diff, node_t * node)
 
             case DIV:
                 return evaluate(diff, node->left) / evaluate(diff, node->right);
+
+            case SIN:
+                return sin(evaluate(diff, node->left));
+
+            case COS:
+                return cos(evaluate(diff, node->left));
+
+            case TAN:
+                return tan(evaluate(diff, node->left));
+
+            case FAC:
+                return (double)factorial((long unsigned int)evaluate(diff, node->left));
 
             default:
                 logPrint(LOG_RELEASE, "evaluate operation type error\n");
@@ -128,6 +140,29 @@ node_t * foldConstants(node_t * node, node_t * parent)
 
                 case POW:
                     new_val = pow(left_val, right_val);
+                    break;
+
+                default:
+                    return node;
+            }
+
+            treeDestroy(node);
+
+            node_t * new_node = newNumNode(new_val);
+            new_node->parent = parent;
+
+            return new_node;
+        }
+    }
+
+    else {
+        if (type_(node->left) == NUM){
+            double val = val_(node->left ).number;
+            double new_val = 0.;
+
+            switch (val_(node).op){
+                case FAC:
+                    new_val = (double)factorial((long unsigned int)val);
                     break;
 
                 default:
@@ -426,7 +461,7 @@ node_t * makeDerivative(diff_t * diff, node_t * expr_node, unsigned int var_inde
                 }
                 case COS: {
                     return  newOprNode(MUL,
-                                newOprNode(COS, treeCopy(expr_node->left), NULL),
+                                newOprNode(SIN, treeCopy(expr_node->left), NULL),
                                 newOprNode(MUL,
                                     makeDerivative(diff, expr_node->left, var_index),
                                     newNumNode(-1.)
@@ -449,6 +484,43 @@ node_t * makeDerivative(diff_t * diff, node_t * expr_node, unsigned int var_inde
             }
         }
     }
+}
+
+node_t * taylorSeries(diff_t * diff, node_t * expr_node, unsigned int var_index, double diff_point, size_t last_member_index)
+{
+    assert(diff);
+    assert(expr_node);
+
+    diff->vars[var_index].value = diff_point;
+
+    node_t * taylor = newNumNode(0.);
+    node_t * cur_derivative = treeCopy(expr_node);
+
+    for (size_t taylor_index = 0; taylor_index < last_member_index; taylor_index++){
+        double cur_derivative_num = evaluate(diff, cur_derivative);
+
+        taylor = newOprNode(ADD,
+                    taylor,
+                    newOprNode(MUL,
+                        newOprNode(DIV,
+                            newNumNode(cur_derivative_num),
+                            newOprNode(FAC, newNumNode(taylor_index), NULL)),
+                        newOprNode(POW,
+                            newVarNode(var_index),
+                            newNumNode((double)taylor_index)
+                        )
+                    )
+                );
+
+        node_t * old_derivative = cur_derivative;
+
+        cur_derivative = makeDerivative(diff, cur_derivative, 0);
+        treeDestroy(old_derivative);
+    }
+
+    treeDestroy(cur_derivative);
+
+    return taylor;
 }
 
 node_t * newOprNode(enum oper op_num, node_t * left, node_t * right)
@@ -560,8 +632,14 @@ static void dumpToTEXrecursive(FILE * out_file, diff_t * diff, node_t * node)
     else {
         switch(op_num) {
             case COS: case SIN: case TAN:
-            fprintf(out_file, "\\%s ", opers[op_num].name);
+                fprintf(out_file, "(\\%s ", opers[op_num].name);
                 dumpToTEXrecursive(out_file, diff, node->left);
+                fprintf(out_file, ")");
+                break;
+
+            case FAC:
+                dumpToTEXrecursive(out_file, diff, node->left);
+                fprintf(out_file, "!");
                 break;
 
             default:
@@ -591,4 +669,16 @@ node_t * getVarNode(diff_t * diff, char * var_name)
     }
 
     return newVarNode(var_index);
+}
+
+long unsigned int factorial(long unsigned int number)
+{
+    long unsigned int ans = 1;
+
+    while (number != 0){
+        ans *= number;
+        number--;
+    }
+
+    return ans;
 }

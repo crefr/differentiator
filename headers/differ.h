@@ -23,7 +23,8 @@ enum oper{
     POW,
     SIN,
     COS,
-    TAN
+    TAN,
+    FAC
 };
 
 typedef struct {
@@ -67,7 +68,8 @@ const oper_t opers[] = { //TODO make it independent of constant places in enum o
     {.name = "^"  , .num = POW, .binary = true,  .commutative = false},
     {.name = "sin", .num = SIN, .binary = false, .commutative = false},
     {.name = "cos", .num = COS, .binary = false, .commutative = false},
-    {.name = "tan", .num = TAN, .binary = false, .commutative = false}
+    {.name = "tan", .num = TAN, .binary = false, .commutative = false},
+    {.name = "!"  , .num = FAC, .binary = false, .commutative = false}
 };
 const size_t opers_size = sizeof(opers) / sizeof(*opers);
 
@@ -84,6 +86,8 @@ void setVariables(diff_t * diff);
 
 node_t * makeDerivative(diff_t * diff, node_t * expr_node, unsigned int var_index);
 
+node_t * taylorSeries(diff_t * diff, node_t * expr_node, unsigned int var_index, double diff_point, size_t last_member_index);
+
 node_t * foldConstants(node_t * node, node_t * parent);
 
 node_t * deleteNeutral(node_t * node, node_t * parent);
@@ -99,6 +103,8 @@ node_t * newNumNode(double num);
 node_t * newVarNode(unsigned int var_index);
 
 node_t * getVarNode(diff_t * diff, char * var_name);
+
+long unsigned int factorial(long unsigned int number);
 
 /// @brief initializes some stuff
 void diffInit(diff_t * diff);
