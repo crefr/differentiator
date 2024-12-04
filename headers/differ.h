@@ -55,27 +55,17 @@ typedef struct {
     unsigned int var_num;
 } diff_t;
 
+typedef node_t * (*diff_func_t)(diff_t *, node_t *, unsigned int);
+
 typedef struct {
     const char * name;
     enum oper num;
+
     bool binary;
     bool commutative;
-} oper_t;
 
-const oper_t opers[] = { //TODO make it independent of constant places in enum oper
-    {.name = "+"  , .num = ADD, .binary = true,  .commutative = true },
-    {.name = "-"  , .num = SUB, .binary = true,  .commutative = false},
-    {.name = "*"  , .num = MUL, .binary = true,  .commutative = true },
-    {.name = "/"  , .num = DIV, .binary = true,  .commutative = false},
-    {.name = "^"  , .num = POW, .binary = true,  .commutative = false},
-    {.name = "sin", .num = SIN, .binary = false, .commutative = false},
-    {.name = "cos", .num = COS, .binary = false, .commutative = false},
-    {.name = "tan", .num = TAN, .binary = false, .commutative = false},
-    {.name = "ln" , .num = LN , .binary = false, .commutative = false},
-    {.name = "log", .num = LOG, .binary = true,  .commutative = false},
-    {.name = "!"  , .num = FAC, .binary = false, .commutative = false}
-};
-const size_t opers_size = sizeof(opers) / sizeof(*opers);
+    diff_func_t diffFunc;
+} oper_t;
 
 /// @brief evaluates the value of tree with the node as a root
 double evaluate(diff_t * diff, node_t * node);
@@ -88,7 +78,7 @@ void exprElemToStr(char * str, void * data);
 
 void setVariables(diff_t * diff);
 
-node_t * makeDerivative(diff_t * diff, node_t * expr_node, unsigned int var_index);
+// node_t * makeDerivative(diff_t * diff, node_t * expr_node, unsigned int var_index);
 
 node_t * taylorSeries(diff_t * diff, node_t * expr_node, unsigned int var_index, double diff_point, size_t last_member_index);
 
@@ -120,5 +110,39 @@ void diffDump(diff_t * diff);
 const uint32_t NUM_COLOR = 0xAAFFAAFF;
 const uint32_t VAR_COLOR = 0xFFAAAAFF;
 const uint32_t OPR_COLOR = 0xFFFFAAFF;
+
+node_t * makeDerivative(diff_t * diff, node_t * expr_node, unsigned int var_index);
+
+
+node_t * diffAddSub(diff_t * diff, node_t * expr_node, unsigned int var_index);
+
+node_t * diffMul   (diff_t * diff, node_t * expr_node, unsigned int var_index);
+
+node_t * diffDiv   (diff_t * diff, node_t * expr_node, unsigned int var_index);
+
+node_t * diffPow   (diff_t * diff, node_t * expr_node, unsigned int var_index);
+
+node_t * diffSin   (diff_t * diff, node_t * expr_node, unsigned int var_index);
+
+node_t * diffCos   (diff_t * diff, node_t * expr_node, unsigned int var_index);
+
+node_t * diffTan   (diff_t * diff, node_t * expr_node, unsigned int var_index);
+
+node_t * diffLn    (diff_t * diff, node_t * expr_node, unsigned int var_index);
+
+const oper_t opers[] = { //TODO make it independent of constant places in enum oper
+    {.name = "+"  , .num = ADD, .binary = true,  .commutative = true , .diffFunc = diffAddSub},
+    {.name = "-"  , .num = SUB, .binary = true,  .commutative = false, .diffFunc = diffAddSub},
+    {.name = "*"  , .num = MUL, .binary = true,  .commutative = true , .diffFunc = diffMul   },
+    {.name = "/"  , .num = DIV, .binary = true,  .commutative = false, .diffFunc = diffDiv   },
+    {.name = "^"  , .num = POW, .binary = true,  .commutative = false, .diffFunc = diffPow   },
+    {.name = "sin", .num = SIN, .binary = false, .commutative = false, .diffFunc = diffSin   },
+    {.name = "cos", .num = COS, .binary = false, .commutative = false, .diffFunc = diffCos   },
+    {.name = "tan", .num = TAN, .binary = false, .commutative = false, .diffFunc = diffTan   },
+    {.name = "ln" , .num = LN , .binary = false, .commutative = false, .diffFunc = diffLn    },
+    {.name = "log", .num = LOG, .binary = true,  .commutative = false, .diffFunc = NULL      },
+    {.name = "!"  , .num = FAC, .binary = false, .commutative = false, .diffFunc = NULL      }
+};
+const size_t opers_size = sizeof(opers) / sizeof(*opers);
 
 #endif

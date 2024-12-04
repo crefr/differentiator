@@ -8,6 +8,7 @@
 #include "bintree.h"
 #include "logger.h"
 #include "hashtable.h"
+#include "derivatives.h"
 
 static void fillOperTable(diff_t * diff);
 
@@ -43,6 +44,32 @@ static void fillOperTable(diff_t * diff)
 
     for (size_t oper_index = 0; oper_index < opers_size; oper_index++){
         tableInsert(&(diff->oper_table), opers[oper_index].name, opers + oper_index, sizeof(oper_t));
+    }
+}
+
+node_t * makeDerivative(diff_t * diff, node_t * expr_node, unsigned int var_index)
+{
+    assert(diff);
+    assert(expr_node);
+
+    switch (type_(expr_node)){
+        case NUM: {
+            return newNumNode(0.);
+        }
+
+        case VAR: {
+            if (val_(expr_node).var == var_index){
+                return newNumNode(1.);
+            }
+            return treeCopy(expr_node);
+        }
+
+        case OPR: {
+            enum oper op_num = val_(expr_node).op;
+            diff_func_t diffFunc = opers[op_num].diffFunc;
+
+            return diffFunc(diff, expr_node, var_index);
+        }
     }
 }
 
@@ -390,107 +417,6 @@ void exprElemToStr(char * str, void * data)
     }
 }
 
-node_t * makeDerivative(diff_t * diff, node_t * expr_node, unsigned int var_index)
-{
-    assert(diff);
-    assert(expr_node);
-
-    switch (type_(expr_node)){
-        case NUM: {
-            return newNumNode(0.);
-        }
-        case VAR: {
-            if (val_(expr_node).var == var_index){
-                return newNumNode(1.);
-            }
-            return treeCopy(expr_node);
-        }
-        case OPR: {
-            switch(val_(expr_node).op){
-                case ADD: {
-                    return newOprNode(ADD,
-                        makeDerivative(diff, expr_node->left , var_index),
-                        makeDerivative(diff, expr_node->right, var_index));
-                }
-                case SUB: {
-                    return newOprNode(SUB,
-                        makeDerivative(diff, expr_node->left , var_index),
-                        makeDerivative(diff, expr_node->right, var_index));
-                }
-                case MUL: {
-                    node_t * dLeft  = makeDerivative(diff, expr_node->left, var_index);
-                    node_t * dRight = makeDerivative(diff, expr_node->right, var_index);
-
-                    node_t * cLeft  = treeCopy(expr_node->left);
-                    node_t * cRight = treeCopy(expr_node->right);
-
-                    return  newOprNode(ADD,
-                                newOprNode(MUL, dLeft, cRight),
-                                newOprNode(MUL, cLeft, dRight)
-                            );
-                }
-                case DIV: {
-                    node_t * dLeft  = makeDerivative(diff, expr_node->left, var_index);
-                    node_t * dRight = makeDerivative(diff, expr_node->right, var_index);
-
-                    node_t * cLeft  = treeCopy(expr_node->left);
-                    node_t * cRightUp = treeCopy(expr_node->right);
-
-                    node_t * cRightDown = treeCopy(expr_node->right);
-
-                    return  newOprNode(DIV,
-                                newOprNode(SUB,
-                                    newOprNode(MUL, dLeft, cRightUp),
-                                    newOprNode(MUL, cLeft, dRight)
-                                ),
-                                newOprNode(POW, cRightDown, newNumNode(2.))
-                            );
-                }
-                case POW: { //TODO add exponent part's derivative
-                    return  newOprNode(MUL,
-                                treeCopy(expr_node->right),
-                                newOprNode(POW,
-                                    treeCopy(expr_node->left),
-                                    newOprNode(SUB,
-                                        treeCopy(expr_node->right),
-                                        newNumNode(1.)
-                                    )
-                                )
-                            );
-                }
-                case SIN: {
-                    return  newOprNode(MUL,
-                                newOprNode(COS, treeCopy(expr_node->left), NULL),
-                                makeDerivative(diff, expr_node->left, var_index)
-                            );
-                }
-                case COS: {
-                    return  newOprNode(MUL,
-                                newOprNode(SIN, treeCopy(expr_node->left), NULL),
-                                newOprNode(MUL,
-                                    makeDerivative(diff, expr_node->left, var_index),
-                                    newNumNode(-1.)
-                                )
-                            );
-                }
-                case TAN: {
-                    return  newOprNode(DIV,
-                                newNumNode(1.),
-                                newOprNode(POW,
-                                    newOprNode(COS, treeCopy(expr_node->left), NULL),
-                                    newNumNode(2.)
-                                )
-                            );
-                }
-
-                default:
-                    printf("havent implemented this operator yet (%d)...\n", val_(expr_node).op);
-                    return NULL;
-            }
-        }
-    }
-}
-
 node_t * taylorSeries(diff_t * diff, node_t * expr_node, unsigned int var_index, double diff_point, size_t last_member_index)
 {
     assert(diff);
@@ -700,10 +626,8 @@ long unsigned int factorial(long unsigned int number)
 {
     long unsigned int ans = 1;
 
-    while (number != 0){
-        ans *= number;
-        number--;
-    }
+    while (number != 0)
+        ans *= (number--);
 
     return ans;
 }

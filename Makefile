@@ -41,7 +41,7 @@ endif
 CFLAGS := -I./$(HEADDIR) -I./$(BINTREEHEADDIR) $(CFLAGS)
 
 ALLDEPS = $(HEADDIR)differ.h $(HEADDIR)logger.h $(HEADDIR)eq_parser.h
-OBJECTS = main.o logger.o differ.o eq_parser.o
+OBJECTS = main.o logger.o differ.o eq_parser.o derivatives.o
 OBJECTS_WITH_DIR 	 = $(addprefix $(OBJDIR),$(OBJECTS))
 
 TREELIB = binTree/Obj/bintree.a

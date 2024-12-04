@@ -4,8 +4,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "differ.h"
 #include "bintree.h"
+#include "differ.h"
 #include "logger.h"
 #include "eq_parser.h"
 
