@@ -32,7 +32,7 @@ int main()
     node_t * derivative = makeDerivative(&diff, tree, 0);
     treeDumpGraph(derivative, exprElemToStr);
 
-    node_t * taylor = taylorSeries(&diff, tree, 0, 0, 8);
+    node_t * taylor = taylorSeries(&diff, tree, 0, 0, 15);
     treeDumpGraph(taylor, exprElemToStr);
 
     tree       = simplifyExpression(tree);

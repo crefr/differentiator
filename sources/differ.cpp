@@ -446,6 +446,8 @@ node_t * taylorSeries(diff_t * diff, node_t * expr_node, unsigned int var_index,
         node_t * old_derivative = cur_derivative;
 
         cur_derivative = makeDerivative(diff, cur_derivative, 0);
+        cur_derivative = simplifyExpression(cur_derivative);
+
         treeDestroy(old_derivative);
     }
 

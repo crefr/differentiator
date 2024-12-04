@@ -17,8 +17,11 @@ tex_dump_t startTexDump(const char * file_name)
 
     fprintf(tex.file,
         "\\documentclass{article}\n"
-        "\\title{Differentiating something}\n"
-        "\\author{Somebody}\n"
+        "\\usepackage[utf8]{inputenc}\n"
+        "\\usepackage[T2A]{fontenc}\n"
+        "\\usepackage[russian]{babel}\n"
+        "\\title{Производничаем...}\n"
+        "\\author{Производных машина}\n"
         "\\date{}\n"
         "\\begin{document}\n"
         "\t\\maketitle\n");
