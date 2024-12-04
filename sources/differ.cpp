@@ -13,6 +13,8 @@ static void fillOperTable(diff_t * diff);
 
 static size_t countVars(node_t * node, unsigned int var_index);
 
+static double calcOper(enum oper op_num, double left_val, double right_val);
+
 const size_t OPR_TABLE_SIZE = 32;
 
 const size_t VAR_TABLE_SIZE = 32;
@@ -44,62 +46,7 @@ static void fillOperTable(diff_t * diff)
     }
 }
 
-double evaluate(diff_t * diff, node_t * node)
-{
-    assert(node);
-    assert(diff);
-
-    logPrint(LOG_DEBUG_PLUS, "entered evaluate for root %p\n", node);
-    logPrint(LOG_DEBUG_PLUS, "\tvalue: %lg, type: %d\n", val_(node).number, type_(node));
-
-    if (type_(node) == OPR){
-        switch (val_(node).op){
-            case ADD:
-                return evaluate(diff, node->left) + evaluate(diff, node->right);
-
-            case SUB:
-                return evaluate(diff, node->left) - evaluate(diff, node->right);
-
-            case MUL:
-                return evaluate(diff, node->left) * evaluate(diff, node->right);
-
-            case DIV:
-                return evaluate(diff, node->left) / evaluate(diff, node->right);
-
-            case SIN:
-                return sin(evaluate(diff, node->left));
-
-            case COS:
-                return cos(evaluate(diff, node->left));
-
-            case TAN:
-                return tan(evaluate(diff, node->left));
-
-            case LN:
-                return log(evaluate(diff, node->left));
-
-            case LOG:
-                return log(evaluate(diff, node->right)) / log(evaluate(diff, node->left));
-
-            case FAC:
-                return (double)factorial((long unsigned int)evaluate(diff, node->left));
-
-            default:
-                logPrint(LOG_RELEASE, "evaluate operation type error\n");
-                return 0.;
-        }
-    }
-    if (type_(node) == NUM)
-        return val_(node).number;
-
-    if (type_(node) == VAR){
-        return diff->vars[val_(node).var].value;
-    }
-
-    return 0.;
-}
-
-double calcOper(enum elem_type op_num, double left_val, double right_val)
+static double calcOper(enum oper op_num, double left_val, double right_val)
 {
     double new_val = 0.;
 
@@ -155,6 +102,32 @@ double calcOper(enum elem_type op_num, double left_val, double right_val)
     return new_val;
 }
 
+double evaluate(diff_t * diff, node_t * node)
+{
+    assert(node);
+    assert(diff);
+
+    logPrint(LOG_DEBUG_PLUS, "entered evaluate for root %p\n", node);
+    logPrint(LOG_DEBUG_PLUS, "\tvalue: %lg, type: %d\n", val_(node).number, type_(node));
+
+    if (type_(node) == NUM)
+        return val_(node).number;
+
+    if (type_(node) == VAR)
+        return diff->vars[val_(node).var].value;
+
+    if (type_(node) == OPR){
+        enum oper op_num = val_(node).op;
+
+        if (opers[op_num].binary)
+            return calcOper(op_num, evaluate(diff, node->left), evaluate(diff, node->right));
+
+        return calcOper(op_num, evaluate(diff, node->left), 0.);
+    }
+
+    return 0.;
+}
+
 node_t * simplifyExpression(node_t * node)
 {
     node = foldConstants(node, NULL);
@@ -178,37 +151,14 @@ node_t * foldConstants(node_t * node, node_t * parent)
     node->left  = foldConstants(node->left , node);
     node->right = foldConstants(node->right, node);
 
-    if (opers[val_(node).op].binary){
+    enum oper op_num = val_(node).op;
+
+    if (opers[op_num].binary){
         if (type_(node->left) == NUM && type_(node->right) == NUM){
             double  left_val = val_(node->left ).number;
             double right_val = val_(node->right).number;
 
-            double new_val = 0.;
-
-            switch (val_(node).op){
-                case ADD:
-                    new_val = left_val + right_val;
-                    break;
-
-                case SUB:
-                    new_val = left_val - right_val;
-                    break;
-
-                case MUL:
-                    new_val = left_val * right_val;
-                    break;
-
-                case DIV:
-                    new_val = left_val / right_val;
-                    break;
-
-                case POW:
-                    new_val = pow(left_val, right_val);
-                    break;
-
-                default:
-                    return node;
-            }
+            double new_val = calcOper(op_num, left_val, right_val);
 
             treeDestroy(node);
 
@@ -221,17 +171,8 @@ node_t * foldConstants(node_t * node, node_t * parent)
 
     else {
         if (type_(node->left) == NUM){
-            double val = val_(node->left ).number;
-            double new_val = 0.;
-
-            switch (val_(node).op){
-                case FAC:
-                    new_val = (double)factorial((long unsigned int)val);
-                    break;
-
-                default:
-                    return node;
-            }
+            double val = val_(node->left).number;
+            double new_val = calcOper(op_num, val, 0);
 
             treeDestroy(node);
 
@@ -737,7 +678,6 @@ node_t * getVarNode(diff_t * diff, char * var_name)
 
 static size_t countVars(node_t * node, unsigned int var_index)
 {
-    assert(diff);
     assert(node);
 
     if (type_(node) == NUM)
