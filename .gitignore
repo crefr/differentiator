@@ -4,3 +4,7 @@ logs/
 .vscode/
 test.md
 headers/derivatives.h
+test.aux
+test.pdf
+test.log
+test.tex

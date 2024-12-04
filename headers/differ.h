@@ -88,8 +88,6 @@ node_t * deleteNeutral(node_t * node, node_t * parent);
 
 node_t * simplifyExpression(node_t * node);
 
-void dumpToTEX(FILE * out_file, diff_t * diff, node_t * node);
-
 node_t * newOprNode(enum oper op_num, node_t * left, node_t * right);
 
 node_t * newNumNode(double num);

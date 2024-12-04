@@ -8,6 +8,7 @@
 #include "differ.h"
 #include "logger.h"
 #include "eq_parser.h"
+#include "tex_dump.h"
 
 int main()
 {
@@ -40,11 +41,13 @@ int main()
 
     treeDumpGraph(derivative, exprElemToStr);
 
-    FILE * tex_file = fopen("test.md", "w");
-    dumpToTEX(tex_file, &diff, tree);
-    dumpToTEX(tex_file, &diff, derivative);
-    dumpToTEX(tex_file, &diff, taylor);
-    fclose(tex_file);
+    tex_dump_t tex = startTexDump("test.tex");
+
+    dumpToTEX(&tex, &diff, tree);
+    dumpToTEX(&tex, &diff, derivative);
+    dumpToTEX(&tex, &diff, taylor);
+
+    endTexDump(&tex);
 
     diffDump(&diff);
 
