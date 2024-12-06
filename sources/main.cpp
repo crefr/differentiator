@@ -23,8 +23,6 @@ int main()
 
     tex_dump_t tex = startTexDump("test.tex");
 
-    // node_t * tree       = readEquationPrefix(&diff, stdin);
-
     char buffer[128] = {};
     scanf("%[^\n]", buffer);
 
@@ -60,7 +58,6 @@ int main()
     treeDestroy(derivative);
     treeDestroy(taylor);
     diffDtor(&diff);
-
 
     logExit();
     return 0;

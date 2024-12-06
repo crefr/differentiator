@@ -121,7 +121,7 @@ static void dumpToTEXrecursive(tex_dump_t * tex, diff_t * diff, node_t * node)
     }
     else {
         switch(op_num) {
-            case COS: case SIN: case TAN:
+            case COS: case SIN: case TAN: case LN:
                 fprintf(tex->file, "(\\%s ", opers[op_num].name);
                 dumpToTEXrecursive(tex, diff, node->left);
                 fprintf(tex->file, ")");
