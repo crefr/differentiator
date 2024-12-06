@@ -63,9 +63,7 @@ node_t * diffPow(diff_t * diff, node_t * expr_node, unsigned int var_index)
     assert(type_(expr_node) == OPR);
 
     size_t num_vars_in_left  = countVars(expr_node->left,  var_index);
-    printf("left:  %zu\n", num_vars_in_left);
     size_t num_vars_in_right = countVars(expr_node->right, var_index);
-    printf("right: %zu\n", num_vars_in_right);
 
     if (num_vars_in_left == 0){
         if (num_vars_in_right == 0)

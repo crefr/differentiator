@@ -139,3 +139,57 @@ static void dumpToTEXrecursive(tex_dump_t * tex, diff_t * diff, node_t * node)
         }
     }
 }
+
+// node_t * TexSimplifyExpression(tex_dump_t * tex, node_t * node){
+//     while
+//
+// }
+//
+// node_t * TexFoldConstants(tex_dump_t * tex, node_t * node, node_t * parent)
+// {
+//     if (node == NULL)
+//         return NULL;
+//
+//     if (type_(node) == VAR)
+//         return node;
+//
+//     if (type_(node) == NUM)
+//         return node;
+//
+//     node->left  = TexfoldConstants(node->left , node);
+//     node->right = TexfoldConstants(node->right, node);
+//
+//     enum oper op_num = val_(node).op;
+//
+//     double new_val = 0.;
+//
+//     if (opers[op_num].binary){
+//         if (type_(node->left) == NUM && type_(node->right) == NUM){
+//             double  left_val = val_(node->left ).number;
+//             double right_val = val_(node->right).number;
+//
+//             new_val = calcOper(op_num, left_val, right_val);
+//         }
+//         else
+//             return node;
+//     }
+//     else {
+//         if (type_(node->left) == NUM){
+//             double val = val_(node->left).number;
+//             new_val = calcOper(op_num, val, 0);
+//         }
+//         else
+//             return node;
+//     }
+//
+//
+//     treeDestroy(node);
+//
+//     node_t * new_node = newNumNode(new_val);
+//     new_node->parent = node->parent;
+//
+//     fprintf(tex->file, "Упрощаем...\n");
+//     dumpToTex
+//
+//     return new_node;
+// }

@@ -27,17 +27,18 @@ int main()
     scanf("%[^\n]", buffer);
 
     node_t * tree       = parseEquation(&diff, buffer);
+
     treeDumpGraph(tree, exprElemToStr);
 
     node_t * derivative = makeDerivative(&diff, tree, 0);
     treeDumpGraph(derivative, exprElemToStr);
 
-    // node_t * taylor = taylorSeries(&diff, tree, 0, 0, 8);
-    // treeDumpGraph(taylor, exprElemToStr);
+    node_t * taylor = taylorSeries(&diff, tree, 0, 0, 8);
+    treeDumpGraph(taylor, exprElemToStr);
 
     tree       = simplifyExpression(tree);
     derivative = simplifyExpression(derivative);
-    // taylor     = simplifyExpression(taylor);
+    taylor     = simplifyExpression(taylor);
 
     treeDumpGraph(derivative, exprElemToStr);
 
@@ -45,7 +46,7 @@ int main()
 
     dumpToTEX(&tex, &diff, tree);
     dumpToTEX(&tex, &diff, derivative);
-    // dumpToTEX(&tex, &diff, taylor);
+    dumpToTEX(&tex, &diff, taylor);
 
     endTexDump(&tex);
 
@@ -53,7 +54,7 @@ int main()
 
     treeDestroy(tree);
     treeDestroy(derivative);
-    // treeDestroy(taylor);
+    treeDestroy(taylor);
     diffDtor(&diff);
 
 

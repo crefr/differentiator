@@ -70,6 +70,8 @@ typedef struct {
 /// @brief evaluates the value of tree with the node as a root
 double evaluate(diff_t * diff, node_t * node);
 
+double calcOper(enum oper op_num, double left_val, double right_val);
+
 /// @brief reads equation in prefix form from the input_file
 node_t * readEquationPrefix(diff_t * diff, FILE * input_file);
 
@@ -82,9 +84,9 @@ void setVariables(diff_t * diff);
 
 node_t * taylorSeries(diff_t * diff, node_t * expr_node, unsigned int var_index, double diff_point, size_t last_member_index);
 
-node_t * foldConstants(node_t * node, node_t * parent);
+node_t * foldConstants(node_t * node, node_t * parent, bool * changed_tree);
 
-node_t * deleteNeutral(node_t * node, node_t * parent);
+node_t * deleteNeutral(node_t * node, node_t * parent, bool * changed_tree);
 
 node_t * simplifyExpression(node_t * node);
 

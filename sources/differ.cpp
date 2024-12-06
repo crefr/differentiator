@@ -12,8 +12,6 @@
 
 static void fillOperTable(diff_t * diff);
 
-static double calcOper(enum oper op_num, double left_val, double right_val);
-
 const size_t OPR_TABLE_SIZE = 32;
 
 const size_t VAR_TABLE_SIZE = 32;
@@ -71,7 +69,7 @@ node_t * makeDerivative(diff_t * diff, node_t * expr_node, unsigned int var_inde
     }
 }
 
-static double calcOper(enum oper op_num, double left_val, double right_val)
+double calcOper(enum oper op_num, double left_val, double right_val)
 {
     double new_val = 0.;
 
@@ -155,14 +153,20 @@ double evaluate(diff_t * diff, node_t * node)
 
 node_t * simplifyExpression(node_t * node)
 {
-    node = foldConstants(node, NULL);
-    node = deleteNeutral(node, NULL);
-    node = foldConstants(node, NULL);
+    assert(node);
+
+    bool changing = true;
+    while (changing){
+        changing = false;
+
+        node = foldConstants(node, NULL, &changing);
+        node = deleteNeutral(node, NULL, &changing);
+    }
 
     return node;
 }
 
-node_t * foldConstants(node_t * node, node_t * parent)
+node_t * foldConstants(node_t * node, node_t * parent, bool * changed_tree)
 {
     if (node == NULL)
         return NULL;
@@ -173,48 +177,47 @@ node_t * foldConstants(node_t * node, node_t * parent)
     if (type_(node) == NUM)
         return node;
 
-    node->left  = foldConstants(node->left , node);
-    node->right = foldConstants(node->right, node);
+    node->left  = foldConstants(node->left , node, changed_tree);
+    node->right = foldConstants(node->right, node, changed_tree);
 
     enum oper op_num = val_(node).op;
+
+    double new_val = 0.;
 
     if (opers[op_num].binary){
         if (type_(node->left) == NUM && type_(node->right) == NUM){
             double  left_val = val_(node->left ).number;
             double right_val = val_(node->right).number;
 
-            double new_val = calcOper(op_num, left_val, right_val);
-
-            treeDestroy(node);
-
-            node_t * new_node = newNumNode(new_val);
-            new_node->parent = parent;
-
-            return new_node;
+            new_val = calcOper(op_num, left_val, right_val);
         }
+        else
+            return node;
     }
-
     else {
         if (type_(node->left) == NUM){
             double val = val_(node->left).number;
-            double new_val = calcOper(op_num, val, 0);
-
-            treeDestroy(node);
-
-            node_t * new_node = newNumNode(new_val);
-            new_node->parent = parent;
-
-            return new_node;
+            new_val = calcOper(op_num, val, 0);
         }
+        else
+            return node;
     }
-    return node;
+
+    treeDestroy(node);
+
+    node_t * new_node = newNumNode(new_val);
+    new_node->parent = parent;
+
+    *changed_tree = true;
+
+    return new_node;
 }
 
-static node_t * delNeutralInCommutatives(node_t * node, node_t * parent);
+static node_t * delNeutralInCommutatives(node_t * node, node_t * parent, bool * changed_tree);
 
-static node_t * delNeutralInNonCommutatives(node_t * node, node_t * parent);
+static node_t * delNeutralInNonCommutatives(node_t * node, node_t * parent, bool * changed_tree);
 
-node_t * deleteNeutral(node_t * node, node_t * parent)
+node_t * deleteNeutral(node_t * node, node_t * parent, bool * changed_tree)
 {
     if (node == NULL)
         return NULL;
@@ -222,19 +225,22 @@ node_t * deleteNeutral(node_t * node, node_t * parent)
     if (type_(node) != OPR)
         return node;
 
-    node->left  = deleteNeutral(node->left,  node);
-    node->right = deleteNeutral(node->right, node);
+    node->left  = deleteNeutral(node->left,  node, changed_tree);
+    node->right = deleteNeutral(node->right, node, changed_tree);
 
     if (opers[val_(node).op].commutative)
-        return delNeutralInCommutatives(node, parent);
+        return delNeutralInCommutatives(node, parent, changed_tree);
 
-    return delNeutralInNonCommutatives(node, parent);
+    return delNeutralInNonCommutatives(node, parent, changed_tree);
 }
 
-static node_t * delNeutralInCommutatives(node_t * node, node_t * parent)
+static node_t * delNeutralInCommutatives(node_t * node, node_t * parent, bool * changed_tree)
 {
     assert(node);
     assert(type_(node) == OPR);
+
+    bool last_changed = *changed_tree;
+    *changed_tree = true;
 
     node_t * cur_node = node->left;
     node_t * another_node = node->right;
@@ -282,16 +288,22 @@ static node_t * delNeutralInCommutatives(node_t * node, node_t * parent)
         else
             cur_node = NULL;
     }
+
+    *changed_tree = last_changed;
+
     return node;
 }
 
-static node_t * delNeutralInNonCommutatives(node_t * node, node_t * parent)
+static node_t * delNeutralInNonCommutatives(node_t * node, node_t * parent, bool * changed_tree)
 {
     assert(node);
     assert(type_(node) == OPR);
 
     node_t * left  = node->left;
     node_t * right = node->right;
+
+    bool last_changed = *changed_tree;
+    *changed_tree = true;
 
     switch (val_(node).op){
         case SUB:
@@ -337,6 +349,9 @@ static node_t * delNeutralInNonCommutatives(node_t * node, node_t * parent)
             }
             break;
     }
+
+    *changed_tree = last_changed;
+
     return node;
 }
 
