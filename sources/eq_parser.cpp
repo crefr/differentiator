@@ -210,9 +210,11 @@ static node_t * getNumber(diff_t * diff, parser_context * context)
     const char * start = context->cur_str;
     double val = 0;
 
-    while ('0' <= *(context->cur_str) && *(context->cur_str) <= '9'){
-        val = val * 10 + *(context->cur_str) - '0';
-        (context->cur_str)++;
+    if ('0' <= *(context->cur_str) && *(context->cur_str) <= '9'){
+        char * end = NULL;
+        val = strtod(context->cur_str, &end);
+
+        context->cur_str = end;
     }
     const char * end = context->cur_str;
 
