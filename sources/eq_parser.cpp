@@ -36,7 +36,7 @@ static node_t * getPrimary(diff_t * diff, parser_context * context);
 
 static node_t * getFunc(diff_t * diff, parser_context * context);
 
-static node_t * getVar    (diff_t * diff, parser_context * context);
+static node_t * getVar(diff_t * diff, parser_context * context);
 
 static bool getName(char * name, parser_context * context, size_t name_max_len);
 
@@ -98,7 +98,6 @@ static node_t * getExpr(diff_t * diff, parser_context * context)
 
         if (oper == '+')
             node = newOprNode(ADD, node, node2);
-
         else
             node = newOprNode(SUB, node, node2);
     }
@@ -127,7 +126,6 @@ static node_t * getMulDiv(diff_t * diff, parser_context * context)
 
         if (op == '*')
             node = newOprNode(MUL, node, node2);
-
         else
             node = newOprNode(DIV, node, node2);
     }

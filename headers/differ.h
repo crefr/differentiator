@@ -96,6 +96,8 @@ node_t * newVarNode(unsigned int var_index);
 
 node_t * getVarNode(diff_t * diff, char * var_name);
 
+size_t countVars(node_t * node, unsigned int var_index);
+
 long unsigned int factorial(long unsigned int number);
 
 /// @brief initializes some stuff

@@ -57,22 +57,65 @@ node_t * diffDiv(diff_t * diff, node_t * expr_node, unsigned int var_index)
             );
 }
 
-//TODO add exponent part's derivative
 node_t * diffPow(diff_t * diff, node_t * expr_node, unsigned int var_index)
 {
     assert(expr_node);
     assert(type_(expr_node) == OPR);
 
-    return  newOprNode(MUL,
-            treeCopy(expr_node->right),
-            newOprNode(POW,
-                treeCopy(expr_node->left),
-                newOprNode(SUB,
+    size_t num_vars_in_left  = countVars(expr_node->left,  var_index);
+    printf("left:  %zu\n", num_vars_in_left);
+    size_t num_vars_in_right = countVars(expr_node->right, var_index);
+    printf("right: %zu\n", num_vars_in_right);
+
+    if (num_vars_in_left == 0){
+        if (num_vars_in_right == 0)
+            return newNumNode(0.);
+
+        return
+            newOprNode(MUL,
+                newOprNode(MUL,
+                    treeCopy(expr_node),
+                    newOprNode(LN, treeCopy(expr_node->left), NULL)
+                ),
+                makeDerivative(diff, expr_node->right, var_index)
+            );
+    }
+
+    if (num_vars_in_right == 0){
+        return
+            newOprNode(MUL,
+                newOprNode(MUL,
                     treeCopy(expr_node->right),
-                    newNumNode(1.)
+                    newOprNode(POW,
+                        treeCopy(expr_node->left),
+                        newOprNode(SUB,
+                            treeCopy(expr_node->right),
+                            newNumNode(1.)
+                        )
+                    )
+                ),
+                makeDerivative(diff, expr_node->left, var_index)
+            );
+    }
+
+    return
+        newOprNode(MUL,
+            treeCopy(expr_node),
+            newOprNode(ADD,
+                newOprNode(DIV,
+                    newOprNode(MUL,
+                        makeDerivative(diff, expr_node->left, var_index),
+                        treeCopy(expr_node->right)
+                    ),
+                    treeCopy(expr_node->left)
+                ),
+                newOprNode(MUL,
+                    newOprNode(LN, treeCopy(expr_node->left), NULL),
+                    makeDerivative(diff, expr_node->right, var_index)
                 )
             )
         );
+
 }
 
 node_t * diffSin(diff_t * diff, node_t * expr_node, unsigned int var_index)

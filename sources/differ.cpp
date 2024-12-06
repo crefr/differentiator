@@ -12,8 +12,6 @@
 
 static void fillOperTable(diff_t * diff);
 
-static size_t countVars(node_t * node, unsigned int var_index);
-
 static double calcOper(enum oper op_num, double left_val, double right_val);
 
 const size_t OPR_TABLE_SIZE = 32;
@@ -400,7 +398,7 @@ void exprElemToStr(char * str, void * data)
 
     switch (elem->type){
         case OPR:
-            sprintf(str, "type = 'OPR', operation '%s' ", opers[elem->val.op]);
+            sprintf(str, "type = 'OPR', operation '%s' ", opers[elem->val.op].name);
             break;
 
         case NUM:
@@ -519,7 +517,7 @@ node_t * getVarNode(diff_t * diff, char * var_name)
     return newVarNode(var_index);
 }
 
-static size_t countVars(node_t * node, unsigned int var_index)
+size_t countVars(node_t * node, unsigned int var_index)
 {
     assert(node);
 
