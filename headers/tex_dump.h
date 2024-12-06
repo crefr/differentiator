@@ -12,6 +12,8 @@ tex_dump_t startTexDump(const char * file_name);
 
 void dumpToTEX(tex_dump_t * tex, diff_t * diff, node_t * node);
 
+node_t * TexSimplifyExpression(tex_dump_t * tex, diff_t * diff, node_t * node);
+
 void endTexDump(tex_dump_t * tex);
 
 #endif

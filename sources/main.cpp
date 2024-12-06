@@ -21,6 +21,8 @@ int main()
 
     treeSetDumpMode(DUMP_MEDIUM);
 
+    tex_dump_t tex = startTexDump("test.tex");
+
     // node_t * tree       = readEquationPrefix(&diff, stdin);
 
     char buffer[128] = {};
@@ -36,17 +38,19 @@ int main()
     node_t * taylor = taylorSeries(&diff, tree, 0, 0, 8);
     treeDumpGraph(taylor, exprElemToStr);
 
-    tree       = simplifyExpression(tree);
-    derivative = simplifyExpression(derivative);
-    taylor     = simplifyExpression(taylor);
+    fprintf(tex.file, "Исходное выражение: \n\n");
+    dumpToTEX(&tex, &diff, tree);
+    tree       = TexSimplifyExpression(&tex, &diff, tree);
+
+    fprintf(tex.file, "Производная: \n\n");
+    dumpToTEX(&tex, &diff, derivative);
+    derivative = TexSimplifyExpression(&tex, &diff, derivative);
+
+    fprintf(tex.file, "Разложение Тейлора в окрестности 0: \n\n");
+    dumpToTEX(&tex, &diff, taylor);
+    taylor     = TexSimplifyExpression(&tex, &diff, taylor);
 
     treeDumpGraph(derivative, exprElemToStr);
-
-    tex_dump_t tex = startTexDump("test.tex");
-
-    dumpToTEX(&tex, &diff, tree);
-    dumpToTEX(&tex, &diff, derivative);
-    dumpToTEX(&tex, &diff, taylor);
 
     endTexDump(&tex);
 

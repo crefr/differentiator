@@ -450,7 +450,10 @@ node_t * taylorSeries(diff_t * diff, node_t * expr_node, unsigned int var_index,
                             newNumNode(cur_derivative_num),
                             newOprNode(FAC, newNumNode(taylor_index), NULL)),
                         newOprNode(POW,
-                            newVarNode(var_index),
+                            newOprNode(SUB,
+                                newVarNode(var_index),
+                                newNumNode(diff_point)
+                            ),
                             newNumNode((double)taylor_index)
                         )
                     )

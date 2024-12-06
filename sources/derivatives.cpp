@@ -160,5 +160,9 @@ node_t * diffLn(diff_t * diff, node_t * expr_node, unsigned int var_index)
     assert(expr_node);
     assert(type_(expr_node) == OPR);
 
-    return  NULL;
+    return
+        newOprNode(DIV,
+            makeDerivative(diff, expr_node->left, var_index),
+            treeCopy(expr_node->left)
+        );
 }
