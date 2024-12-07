@@ -78,41 +78,61 @@ node_t * readEquationPrefix(diff_t * diff, FILE * input_file);
 /// @brief make string about expression element, used in dump
 void exprElemToStr(char * str, void * data);
 
+/// @brief asking user to insert variables values
 void setVariables(diff_t * diff);
 
-// node_t * makeDerivative(diff_t * diff, node_t * expr_node, unsigned int var_index);
-
+/// @brief make taylor series for the function
 node_t * taylorSeries(diff_t * diff, node_t * expr_node, unsigned int var_index, double diff_point, size_t last_member_index);
 
+/*------------------------------------------------------------------------------------------*/
+
+/// @brief folds constants in expression
 node_t * foldConstants(node_t * node, node_t * parent, bool * changed_tree);
 
+/// @brief deletes neutral constructions
 node_t * deleteNeutral(node_t * node, node_t * parent, bool * changed_tree);
 
+/// @brief simplifies expression, uses foldConstants and deleteNeutral in cycle
 node_t * simplifyExpression(node_t * node);
 
+/*------------------------------------------------------------------------------------------*/
+
+/// @brief makes new operation node
 node_t * newOprNode(enum oper op_num, node_t * left, node_t * right);
 
+/// @brief makes new number node
 node_t * newNumNode(double num);
 
+/// @brief makes new variable node
 node_t * newVarNode(unsigned int var_index);
 
+/// @brief finds variable in table and if there is not - makes new, returns pointer to node with variable
 node_t * getVarNode(diff_t * diff, char * var_name);
 
+/// @brief counts variables in the tree
 size_t countVars(node_t * node, unsigned int var_index);
 
+/// @brief calculates factorial of the number
 long unsigned int factorial(long unsigned int number);
 
-/// @brief initializes some stuff
+/*------------------------------------------------------------------------------------------*/
+
+/// @brief initializes diff_t structure
 void diffInit(diff_t * diff);
 
+/// @brief destructs diff_t structure
 void diffDtor(diff_t * diff);
 
+/// @brief dumping diff_t structure
 void diffDump(diff_t * diff);
 
 const uint32_t NUM_COLOR = 0xAAFFAAFF;
 const uint32_t VAR_COLOR = 0xFFAAAAFF;
 const uint32_t OPR_COLOR = 0xFFFFAAFF;
 
+/*------------------------------------------------------------------------------------------*/
+
+/// @brief makes derivative of the expression
 node_t * makeDerivative(diff_t * diff, node_t * expr_node, unsigned int var_index);
 
 
@@ -132,7 +152,7 @@ node_t * diffTan   (diff_t * diff, node_t * expr_node, unsigned int var_index);
 
 node_t * diffLn    (diff_t * diff, node_t * expr_node, unsigned int var_index);
 
-const oper_t opers[] = { //TODO make it independent of constant places in enum oper
+const oper_t opers[] = {
     {.name = "+"  , .num = ADD, .binary = true,  .commutative = true , .diffFunc = diffAddSub},
     {.name = "-"  , .num = SUB, .binary = true,  .commutative = false, .diffFunc = diffAddSub},
     {.name = "*"  , .num = MUL, .binary = true,  .commutative = true , .diffFunc = diffMul   },

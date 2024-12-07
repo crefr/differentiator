@@ -10,6 +10,8 @@
 #include "eq_parser.h"
 #include "tex_dump.h"
 
+const size_t BUFFER_LEN = 128;
+
 int main()
 {
     mkdir("logs", S_IFDIR);
@@ -23,7 +25,7 @@ int main()
 
     tex_dump_t tex = startTexDump("test.tex");
 
-    char buffer[128] = {};
+    char buffer[BUFFER_LEN] = {};
     scanf("%[^\n]", buffer);
 
     node_t * tree       = parseEquation(&diff, buffer);
