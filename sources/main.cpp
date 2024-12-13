@@ -42,9 +42,13 @@ int main()
     dumpToTEX(&tex, &diff, tree);
     tree       = TexSimplifyExpression(&tex, &diff, tree);
 
+    fprintf(tex.file, "\\vspace{5mm}\n");
+
     fprintf(tex.file, "Производная: \n\n");
     dumpToTEX(&tex, &diff, derivative);
     derivative = TexSimplifyExpression(&tex, &diff, derivative);
+
+    fprintf(tex.file, "\\vspace{5mm}\n");
 
     fprintf(tex.file, "Разложение Тейлора в окрестности 0: \n\n");
     dumpToTEX(&tex, &diff, taylor);

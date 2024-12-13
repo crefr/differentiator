@@ -60,6 +60,7 @@ void dumpToTEX(tex_dump_t * tex, diff_t * diff, node_t * node)
     dumpToTEXrecursive(tex, diff, node, NULL);
 
     fprintf(tex->file, " $\n\n");
+    fprintf(tex->file, "\\vspace{3mm}\n");
 }
 
 static void dumpToTEXrecursive(tex_dump_t * tex, diff_t * diff, node_t * node, node_t * parent)
@@ -69,7 +70,11 @@ static void dumpToTEXrecursive(tex_dump_t * tex, diff_t * diff, node_t * node, n
     assert(node);
 
     if (type_(node) == NUM){
-        fprintf(tex->file, "%lg", val_(node).number);
+        if (val_(node).number < 0)
+            fprintf(tex->file, "(%lg)", val_(node).number);
+        else
+            fprintf(tex->file, "%lg", val_(node).number);
+
         return;
     }
 
