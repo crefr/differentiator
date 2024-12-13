@@ -65,6 +65,8 @@ typedef struct {
     bool commutative;
 
     diff_func_t diffFunc;
+
+    int priority;
 } oper_t;
 
 /// @brief evaluates the value of tree with the node as a root
@@ -153,17 +155,17 @@ node_t * diffTan   (diff_t * diff, node_t * expr_node, unsigned int var_index);
 node_t * diffLn    (diff_t * diff, node_t * expr_node, unsigned int var_index);
 
 const oper_t opers[] = {
-    {.name = "+"  , .num = ADD, .binary = true,  .commutative = true , .diffFunc = diffAddSub},
-    {.name = "-"  , .num = SUB, .binary = true,  .commutative = false, .diffFunc = diffAddSub},
-    {.name = "*"  , .num = MUL, .binary = true,  .commutative = true , .diffFunc = diffMul   },
-    {.name = "/"  , .num = DIV, .binary = true,  .commutative = false, .diffFunc = diffDiv   },
-    {.name = "^"  , .num = POW, .binary = true,  .commutative = false, .diffFunc = diffPow   },
-    {.name = "sin", .num = SIN, .binary = false, .commutative = false, .diffFunc = diffSin   },
-    {.name = "cos", .num = COS, .binary = false, .commutative = false, .diffFunc = diffCos   },
-    {.name = "tan", .num = TAN, .binary = false, .commutative = false, .diffFunc = diffTan   },
-    {.name = "ln" , .num = LN , .binary = false, .commutative = false, .diffFunc = diffLn    },
-    {.name = "log", .num = LOG, .binary = true,  .commutative = false, .diffFunc = NULL      },
-    {.name = "!"  , .num = FAC, .binary = false, .commutative = false, .diffFunc = NULL      }
+    {.name = "+"  , .num = ADD, .binary = true,  .commutative = true , .diffFunc = diffAddSub, .priority = 7},
+    {.name = "-"  , .num = SUB, .binary = true,  .commutative = false, .diffFunc = diffAddSub, .priority = 7},
+    {.name = "*"  , .num = MUL, .binary = true,  .commutative = true , .diffFunc = diffMul   , .priority = 8},
+    {.name = "/"  , .num = DIV, .binary = true,  .commutative = false, .diffFunc = diffDiv   , .priority = -1},
+    {.name = "^"  , .num = POW, .binary = true,  .commutative = false, .diffFunc = diffPow   , .priority = 9},
+    {.name = "sin", .num = SIN, .binary = false, .commutative = false, .diffFunc = diffSin   , .priority = 10},
+    {.name = "cos", .num = COS, .binary = false, .commutative = false, .diffFunc = diffCos   , .priority = 10},
+    {.name = "tan", .num = TAN, .binary = false, .commutative = false, .diffFunc = diffTan   , .priority = 10},
+    {.name = "ln" , .num = LN , .binary = false, .commutative = false, .diffFunc = diffLn    , .priority = 10},
+    {.name = "log", .num = LOG, .binary = true,  .commutative = false, .diffFunc = NULL      , .priority = 10},
+    {.name = "!"  , .num = FAC, .binary = false, .commutative = false, .diffFunc = NULL      , .priority = 10}
 };
 const size_t opers_size = sizeof(opers) / sizeof(*opers);
 

@@ -47,7 +47,7 @@ void endTexDump(tex_dump_t * tex)
 
 }
 
-static void dumpToTEXrecursive(tex_dump_t * tex, diff_t * diff, node_t * node);
+static void dumpToTEXrecursive(tex_dump_t * tex, diff_t * diff, node_t * node, node_t * parent);
 
 void dumpToTEX(tex_dump_t * tex, diff_t * diff, node_t * node)
 {
@@ -57,12 +57,12 @@ void dumpToTEX(tex_dump_t * tex, diff_t * diff, node_t * node)
 
     fprintf(tex->file, "$ ");
 
-    dumpToTEXrecursive(tex, diff, node);
+    dumpToTEXrecursive(tex, diff, node, NULL);
 
     fprintf(tex->file, " $\n\n");
 }
 
-static void dumpToTEXrecursive(tex_dump_t * tex, diff_t * diff, node_t * node)
+static void dumpToTEXrecursive(tex_dump_t * tex, diff_t * diff, node_t * node, node_t * parent)
 {
     assert(tex);
     assert(diff);
@@ -79,65 +79,72 @@ static void dumpToTEXrecursive(tex_dump_t * tex, diff_t * diff, node_t * node)
     }
 
     enum oper op_num = val_(node).op;
+
+    bool need_brackets = false;
+
+    if (parent != NULL){
+        enum oper parent_op = val_(parent).op;
+
+        if (opers[parent_op].priority > opers[op_num].priority)
+            need_brackets = true;
+    }
+
+    if (need_brackets)
+        fprintf(tex->file, "(");
+
     if (opers[op_num].binary){
         switch(op_num){
             case DIV:
                 fprintf(tex->file, "\\frac{");
 
-                dumpToTEXrecursive(tex, diff, node->left);
+                dumpToTEXrecursive(tex, diff, node->left, node);
                 fprintf(tex->file, "}{");
-                dumpToTEXrecursive(tex, diff, node->right);
+                dumpToTEXrecursive(tex, diff, node->right, node);
 
                 fprintf(tex->file, "}");
                 break;
 
             case POW:
-                dumpToTEXrecursive(tex, diff, node->left);
+                dumpToTEXrecursive(tex, diff, node->left, node);
                 fprintf(tex->file, "^{");
-                dumpToTEXrecursive(tex, diff, node->right);
+                dumpToTEXrecursive(tex, diff, node->right, node);
                 fprintf(tex->file, "}");
                 break;
 
             case MUL:
-                fprintf(tex->file, "(");
-
-                dumpToTEXrecursive(tex, diff, node->left);
+                dumpToTEXrecursive(tex, diff, node->left, node);
                 fprintf(tex->file, " \\cdot ");
-                dumpToTEXrecursive(tex, diff, node->right);
-
-                fprintf(tex->file, ")");
+                dumpToTEXrecursive(tex, diff, node->right, node);
                 break;
 
             default:
-                fprintf(tex->file, "(");
-
-                dumpToTEXrecursive(tex, diff, node->left);
+                dumpToTEXrecursive(tex, diff, node->left, node);
                 fprintf(tex->file, " %s ", opers[op_num].name);
-                dumpToTEXrecursive(tex, diff, node->right);
-
-                fprintf(tex->file, ")");
+                dumpToTEXrecursive(tex, diff, node->right, node);
                 break;
         }
     }
     else {
         switch(op_num) {
             case COS: case SIN: case TAN: case LN:
-                fprintf(tex->file, "(\\%s ", opers[op_num].name);
-                dumpToTEXrecursive(tex, diff, node->left);
-                fprintf(tex->file, ")");
+                fprintf(tex->file, "\\%s ", opers[op_num].name);
+                dumpToTEXrecursive(tex, diff, node->left, node);
                 break;
 
             case FAC:
-                dumpToTEXrecursive(tex, diff, node->left);
+                dumpToTEXrecursive(tex, diff, node->left, node);
                 fprintf(tex->file, "!");
                 break;
 
             default:
                 fprintf(tex->file, "%s", opers[op_num].name);
-                dumpToTEXrecursive(tex, diff, node->left);
+                dumpToTEXrecursive(tex, diff, node->left, node);
                 break;
         }
     }
+
+    if (need_brackets)
+        fprintf(tex->file, ")");
 }
 
 node_t * TexSimplifyExpression(tex_dump_t * tex, diff_t * diff, node_t * node)

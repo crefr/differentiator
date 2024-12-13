@@ -14,7 +14,7 @@ const size_t BUFFER_LEN = 128;
 
 int main()
 {
-    mkdir("logs", S_IFDIR);
+    mkdir("logs", 0777);
     logStart("logs/log.html", LOG_DEBUG, LOG_HTML);
     // logCancelBuffer();
 

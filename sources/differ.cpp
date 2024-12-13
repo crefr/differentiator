@@ -8,7 +8,6 @@
 #include "bintree.h"
 #include "logger.h"
 #include "hashtable.h"
-#include "derivatives.h"
 
 static void fillOperTable(diff_t * diff);
 

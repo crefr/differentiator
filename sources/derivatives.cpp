@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "derivatives.h"
 #include "bintree.h"
 #include "differ.h"
 
