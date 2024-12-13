@@ -21,4 +21,7 @@ node_t * TexSimplifyExpression(tex_dump_t * tex, diff_t * diff, node_t * node);
 /// @brief ends tex dump, closes tex file
 void endTexDump(tex_dump_t * tex);
 
+/// @brief makes plot of tree
+void TexMakeGraph(tex_dump_t * tex, diff_t * diff, node_t * tree);
+
 #endif

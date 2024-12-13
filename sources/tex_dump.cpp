@@ -20,6 +20,7 @@ tex_dump_t startTexDump(const char * file_name)
         "\\usepackage[utf8]{inputenc}\n"
         "\\usepackage[T2A]{fontenc}\n"
         "\\usepackage[russian]{babel}\n"
+        "\\usepackage{pgfplots}\n"
         "\\title{Производничаем...}\n"
         "\\author{Производных машина}\n"
         "\\date{}\n"
@@ -183,4 +184,22 @@ node_t * TexSimplifyExpression(tex_dump_t * tex, diff_t * diff, node_t * node)
     }
 
     return node;
+}
+
+void TexMakeGraph(tex_dump_t * tex, diff_t * diff, node_t * tree)
+{
+    assert(tex);
+    assert(diff);
+    assert(tree);
+
+    fprintf(tex->file,
+    "\\begin{tikzpicture}\n"
+    "\\begin{axis}[\n"
+    "xlabel={$x$},\n"
+    "ylabel={$f(x)$},\n"
+    "title={Plot of $f(x) = x^2$},\n"
+    "]\n"
+    "\\addplot[domain=-2:2, samples=100, blue]{x^2};\n"
+    "\\end{axis}\n"
+    "\\end{tikzpicture}\n");
 }

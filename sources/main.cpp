@@ -54,6 +54,8 @@ int main()
     dumpToTEX(&tex, &diff, taylor);
     taylor     = TexSimplifyExpression(&tex, &diff, taylor);
 
+    TexMakeGraph(&tex, &diff, tree);
+
     treeDumpGraph(derivative, exprElemToStr);
 
     endTexDump(&tex);
