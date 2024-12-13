@@ -5,163 +5,159 @@
 #include "bintree.h"
 #include "differ.h"
 
-node_t * diffAddSub(diff_t * diff, node_t * expr_node, unsigned int var_index)
+#define OPR_ newOprNode
+#define NUM(number) newNumNode(number)
+#define DL_ makeDerivative(diff, node->left , var_index)
+#define DR_ makeDerivative(diff, node->right, var_index)
+#define CL_ treeCopy(node->left )
+#define CR_ treeCopy(node->right)
+
+#define D_(node) makeDerivative(diff, node, var_index)
+#define C_(node) treeCopy(node)
+
+node_t * diffAddSub(diff_t * diff, node_t * node, unsigned int var_index)
 {
-    assert(expr_node);
-    assert(type_(expr_node) == OPR);
+    assert(node);
+    assert(type_(node) == OPR);
 
-    enum oper op_num = val_(expr_node).op;
+    enum oper op_num = val_(node).op;
 
-    return  newOprNode(op_num,
-                makeDerivative(diff, expr_node->left , var_index),
-                makeDerivative(diff, expr_node->right, var_index));
+    return  OPR_(op_num,
+                D_(node->left),
+                D_(node->right));
 }
 
-node_t * diffMul(diff_t * diff, node_t * expr_node, unsigned int var_index)
+node_t * diffMul(diff_t * diff, node_t * node, unsigned int var_index)
 {
-    assert(expr_node);
-    assert(type_(expr_node) == OPR);
+    assert(node);
+    assert(type_(node) == OPR);
 
-    node_t * dLeft  = makeDerivative(diff, expr_node->left, var_index);
-    node_t * dRight = makeDerivative(diff, expr_node->right, var_index);
-
-    node_t * cLeft  = treeCopy(expr_node->left);
-    node_t * cRight = treeCopy(expr_node->right);
-
-    return  newOprNode(ADD,
-                newOprNode(MUL, dLeft, cRight),
-                newOprNode(MUL, cLeft, dRight)
+    return  OPR_(ADD,
+                OPR_(MUL, DL_, CR_),
+                OPR_(MUL, CL_, DR_)
             );
 }
 
-node_t * diffDiv(diff_t * diff, node_t * expr_node, unsigned int var_index)
+node_t * diffDiv(diff_t * diff, node_t * node, unsigned int var_index)
 {
-    assert(expr_node);
-    assert(type_(expr_node) == OPR);
+    assert(node);
+    assert(type_(node) == OPR);
 
-    node_t * dLeft  = makeDerivative(diff, expr_node->left, var_index);
-    node_t * dRight = makeDerivative(diff, expr_node->right, var_index);
-
-    node_t * cLeft  = treeCopy(expr_node->left);
-    node_t * cRightUp = treeCopy(expr_node->right);
-
-    node_t * cRightDown = treeCopy(expr_node->right);
-
-    return  newOprNode(DIV,
-                newOprNode(SUB,
-                    newOprNode(MUL, dLeft, cRightUp),
-                    newOprNode(MUL, cLeft, dRight)
+    return  OPR_(DIV,
+                OPR_(SUB,
+                    OPR_(MUL, DL_, CR_),
+                    OPR_(MUL, CL_, DR_)
                 ),
-                newOprNode(POW, cRightDown, newNumNode(2.))
+                OPR_(POW, CR_, NUM(2.))
             );
 }
 
-node_t * diffPow(diff_t * diff, node_t * expr_node, unsigned int var_index)
+node_t * diffPow(diff_t * diff, node_t * node, unsigned int var_index)
 {
-    assert(expr_node);
-    assert(type_(expr_node) == OPR);
+    assert(node);
+    assert(type_(node) == OPR);
 
-    size_t num_vars_in_left  = countVars(expr_node->left,  var_index);
-    size_t num_vars_in_right = countVars(expr_node->right, var_index);
+    size_t num_vars_in_left  = countVars(node->left,  var_index);
+    size_t num_vars_in_right = countVars(node->right, var_index);
 
     if (num_vars_in_left == 0){
         if (num_vars_in_right == 0)
-            return newNumNode(0.);
+            return NUM(0.);
 
         return
-            newOprNode(MUL,
-                newOprNode(MUL,
-                    treeCopy(expr_node),
-                    newOprNode(LN, treeCopy(expr_node->left), NULL)
+            OPR_(MUL,
+                OPR_(MUL,
+                    C_(node),
+                    OPR_(LN, CL_, NULL)
                 ),
-                makeDerivative(diff, expr_node->right, var_index)
+                DR_
             );
     }
 
     if (num_vars_in_right == 0){
         return
-            newOprNode(MUL,
-                newOprNode(MUL,
-                    treeCopy(expr_node->right),
-                    newOprNode(POW,
-                        treeCopy(expr_node->left),
-                        newOprNode(SUB,
-                            treeCopy(expr_node->right),
-                            newNumNode(1.)
+            OPR_(MUL,
+                OPR_(MUL,
+                    CR_,
+                    OPR_(POW,
+                        CL_,
+                        OPR_(SUB,
+                            CR_,
+                            NUM(1.)
                         )
                     )
                 ),
-                makeDerivative(diff, expr_node->left, var_index)
+                DL_
             );
     }
 
     return
-        newOprNode(MUL,
-            treeCopy(expr_node),
-            newOprNode(ADD,
-                newOprNode(DIV,
-                    newOprNode(MUL,
-                        makeDerivative(diff, expr_node->left, var_index),
-                        treeCopy(expr_node->right)
+        OPR_(MUL,
+            C_(node),
+            OPR_(ADD,
+                OPR_(DIV,
+                    OPR_(MUL,
+                        DL_,
+                        CR_
                     ),
-                    treeCopy(expr_node->left)
+                    CL_
                 ),
-                newOprNode(MUL,
-                    newOprNode(LN, treeCopy(expr_node->left), NULL),
-                    makeDerivative(diff, expr_node->right, var_index)
+                OPR_(MUL,
+                    OPR_(LN, CL_, NULL),
+                    DR_
                 )
             )
         );
 
 }
 
-node_t * diffSin(diff_t * diff, node_t * expr_node, unsigned int var_index)
+node_t * diffSin(diff_t * diff, node_t * node, unsigned int var_index)
 {
-    assert(expr_node);
-    assert(type_(expr_node) == OPR);
+    assert(node);
+    assert(type_(node) == OPR);
 
-    return  newOprNode(MUL,
-                newOprNode(COS, treeCopy(expr_node->left), NULL),
-                makeDerivative(diff, expr_node->left, var_index)
+    return  OPR_(MUL,
+                OPR_(COS, CL_, NULL),
+                DL_
             );
 }
 
-node_t * diffCos(diff_t * diff, node_t * expr_node, unsigned int var_index)
+node_t * diffCos(diff_t * diff, node_t * node, unsigned int var_index)
 {
-    assert(expr_node);
-    assert(type_(expr_node) == OPR);
+    assert(node);
+    assert(type_(node) == OPR);
 
-    return  newOprNode(MUL,
-                newOprNode(SIN, treeCopy(expr_node->left), NULL),
-                newOprNode(MUL,
-                    makeDerivative(diff, expr_node->left, var_index),
-                    newNumNode(-1.)
+    return  OPR_(MUL,
+                OPR_(SIN, CL_, NULL),
+                OPR_(MUL,
+                    DL_,
+                    NUM(-1.)
                 )
             );
 }
 
-node_t * diffTan(diff_t * diff, node_t * expr_node, unsigned int var_index)
+node_t * diffTan(diff_t * diff, node_t * node, unsigned int var_index)
 {
-    assert(expr_node);
-    assert(type_(expr_node) == OPR);
+    assert(node);
+    assert(type_(node) == OPR);
 
-    return  newOprNode(DIV,
-                newNumNode(1.),
-                newOprNode(POW,
-                    newOprNode(COS, treeCopy(expr_node->left), NULL),
-                    newNumNode(2.)
+    return  OPR_(DIV,
+                NUM(1.),
+                OPR_(POW,
+                    OPR_(COS, CL_, NULL),
+                    NUM(2.)
                 )
             );
 }
 
-node_t * diffLn(diff_t * diff, node_t * expr_node, unsigned int var_index)
+node_t * diffLn(diff_t * diff, node_t * node, unsigned int var_index)
 {
-    assert(expr_node);
-    assert(type_(expr_node) == OPR);
+    assert(node);
+    assert(type_(node) == OPR);
 
     return
-        newOprNode(DIV,
-            makeDerivative(diff, expr_node->left, var_index),
-            treeCopy(expr_node->left)
+        OPR_(DIV,
+            DL_,
+            CL_
         );
 }

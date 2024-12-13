@@ -6,6 +6,10 @@
 #include "differ.h"
 #include "bintree.h"
 
+static void dumpToTEXrecursive(tex_dump_t * tex, diff_t * diff, node_t * node, node_t * parent);
+
+static void operatorDump(tex_dump_t * tex, diff_t * diff, node_t * node, node_t * parent);
+
 tex_dump_t startTexDump(const char * file_name)
 {
     assert(file_name);
@@ -48,8 +52,6 @@ void endTexDump(tex_dump_t * tex)
 
 }
 
-static void dumpToTEXrecursive(tex_dump_t * tex, diff_t * diff, node_t * node, node_t * parent);
-
 void dumpToTEX(tex_dump_t * tex, diff_t * diff, node_t * node)
 {
     assert(tex);
@@ -84,6 +86,11 @@ static void dumpToTEXrecursive(tex_dump_t * tex, diff_t * diff, node_t * node, n
         return;
     }
 
+    operatorDump(tex, diff, node, parent);
+}
+
+static void operatorDump(tex_dump_t * tex, diff_t * diff, node_t * node, node_t * parent)
+{
     enum oper op_num = val_(node).op;
 
     bool need_brackets = false;
@@ -133,8 +140,9 @@ static void dumpToTEXrecursive(tex_dump_t * tex, diff_t * diff, node_t * node, n
     else {
         switch(op_num) {
             case COS: case SIN: case TAN: case LN:
-                fprintf(tex->file, "\\%s ", opers[op_num].name);
+                fprintf(tex->file, "\\%s(", opers[op_num].name);
                 dumpToTEXrecursive(tex, diff, node->left, node);
+                fprintf(tex->file, ")");
                 break;
 
             case FAC:
@@ -186,7 +194,8 @@ node_t * TexSimplifyExpression(tex_dump_t * tex, diff_t * diff, node_t * node)
     return node;
 }
 
-void TexMakeGraph(tex_dump_t * tex, diff_t * diff, node_t * tree)
+void TexMakePlot(tex_dump_t * tex, diff_t * diff, node_t * tree,
+                  double left_border, double right_border, size_t num_of_pts, unsigned int var_index)
 {
     assert(tex);
     assert(diff);
@@ -197,9 +206,21 @@ void TexMakeGraph(tex_dump_t * tex, diff_t * diff, node_t * tree)
     "\\begin{axis}[\n"
     "xlabel={$x$},\n"
     "ylabel={$f(x)$},\n"
-    "title={Plot of $f(x) = x^2$},\n"
+    "title={График $f(x)$},\n"
     "]\n"
-    "\\addplot[domain=-2:2, samples=100, blue]{x^2};\n"
+    "\\addplot table {\n");
+
+    double step = (right_border - left_border) / num_of_pts;
+
+    for (double cur_x = left_border; cur_x < right_border; cur_x += step){
+        diff->vars[var_index].value = cur_x;
+
+        double cur_y = evaluate(diff, tree);
+        fprintf(tex->file, "%lf %lf\n", cur_x, cur_y);
+    }
+
+    fprintf(tex->file,
+	"};\n"
     "\\end{axis}\n"
     "\\end{tikzpicture}\n");
 }
