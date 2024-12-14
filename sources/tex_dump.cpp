@@ -25,6 +25,13 @@ tex_dump_t startTexDump(const char * file_name)
         "\\usepackage[T2A]{fontenc}\n"
         "\\usepackage[russian]{babel}\n"
         "\\usepackage{pgfplots}\n"
+        "\\usepackage{geometry}\n"
+        "\\geometry{\n"
+        "a4paper,\n"
+        "total={170mm,257mm},\n"
+        "left=20mm,\n"
+        "top=20mm,\n"
+        "}"
         "\\title{Производничаем...}\n"
         "\\author{Производных машина}\n"
         "\\date{}\n"
@@ -49,7 +56,6 @@ void endTexDump(tex_dump_t * tex)
 
     printf("%s\n", system_str);
     system(system_str);
-
 }
 
 void dumpToTEX(tex_dump_t * tex, diff_t * diff, node_t * node)
@@ -202,13 +208,13 @@ void TexMakePlot(tex_dump_t * tex, diff_t * diff, node_t * tree,
     assert(tree);
 
     fprintf(tex->file,
-    "\\begin{tikzpicture}\n"
-    "\\begin{axis}[\n"
-    "xlabel={$x$},\n"
-    "ylabel={$f(x)$},\n"
-    "title={График $f(x)$},\n"
-    "]\n"
-    "\\addplot table {\n");
+        "\\begin{tikzpicture}\n"
+        "\\begin{axis}[\n"
+        "xlabel={$x$},\n"
+        "ylabel={$f(x)$},\n"
+        "title={График $f(x)$},\n"
+        "]\n"
+        "\\addplot[mark=none] table {\n");
 
     double step = (right_border - left_border) / num_of_pts;
 
@@ -220,7 +226,7 @@ void TexMakePlot(tex_dump_t * tex, diff_t * diff, node_t * tree,
     }
 
     fprintf(tex->file,
-	"};\n"
-    "\\end{axis}\n"
-    "\\end{tikzpicture}\n");
+        "};\n"
+        "\\end{axis}\n"
+        "\\end{tikzpicture}\n");
 }
