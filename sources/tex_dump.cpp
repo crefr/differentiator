@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <math.h>
 
 #include "tex_dump.h"
 #include "differ.h"
@@ -201,20 +202,22 @@ node_t * TexSimplifyExpression(tex_dump_t * tex, diff_t * diff, node_t * node)
 }
 
 void TexMakePlot(tex_dump_t * tex, diff_t * diff, node_t * tree,
-                  double left_border, double right_border, size_t num_of_pts, unsigned int var_index)
+                  double left_border, double right_border, size_t num_of_pts, unsigned int var_index, double max_y)
 {
     assert(tex);
     assert(diff);
     assert(tree);
 
     fprintf(tex->file,
+        "\\begin{center}\n"
         "\\begin{tikzpicture}\n"
         "\\begin{axis}[\n"
         "xlabel={$x$},\n"
         "ylabel={$f(x)$},\n"
+        "grid=both,\n"
         "title={График $f(x)$},\n"
         "]\n"
-        "\\addplot[mark=none] table {\n");
+        "\\addplot[mark=none, color=blue] table {\n");
 
     double step = (right_border - left_border) / num_of_pts;
 
@@ -222,11 +225,14 @@ void TexMakePlot(tex_dump_t * tex, diff_t * diff, node_t * tree,
         diff->vars[var_index].value = cur_x;
 
         double cur_y = evaluate(diff, tree);
-        fprintf(tex->file, "%lf %lf\n", cur_x, cur_y);
+
+        if (fabs(cur_y) < max_y)
+            fprintf(tex->file, "%lf %lf\n", cur_x, cur_y);
     }
 
     fprintf(tex->file,
         "};\n"
         "\\end{axis}\n"
-        "\\end{tikzpicture}\n");
+        "\\end{tikzpicture}\n"
+        "\\end{center}");
 }

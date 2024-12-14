@@ -54,7 +54,7 @@ int main()
     dumpToTEX(&tex, &diff, taylor);
     taylor     = TexSimplifyExpression(&tex, &diff, taylor);
 
-    TexMakePlot(&tex, &diff, tree, -10., 10., 1000, 0);
+    TexMakePlot(&tex, &diff, tree, -5., 5., 1000, 0, 10);
 
     treeDumpGraph(derivative, exprElemToStr);
 

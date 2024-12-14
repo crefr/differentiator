@@ -23,6 +23,6 @@ void endTexDump(tex_dump_t * tex);
 
 /// @brief makes plot of tree
 void TexMakePlot(tex_dump_t * tex, diff_t * diff, node_t * tree,
-                  double left_border, double right_border, size_t num_of_pts, unsigned int var_index);
+                  double left_border, double right_border, size_t num_of_pts, unsigned int var_index, double max_y);
 
 #endif
