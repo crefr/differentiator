@@ -105,7 +105,7 @@ static void operatorDump(tex_dump_t * tex, diff_t * diff, node_t * node, node_t 
     if (parent != NULL){
         enum oper parent_op = val_(parent).op;
 
-        if (opers[parent_op].priority > opers[op_num].priority)
+        if (! opers[op_num].binary && opers[parent_op].priority > opers[op_num].priority)
             need_brackets = true;
     }
 

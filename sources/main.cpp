@@ -42,6 +42,13 @@ int main()
     dumpToTEX(&tex, &diff, tree);
     tree       = TexSimplifyExpression(&tex, &diff, tree);
 
+    fprintf(tex.file, "Ответ (1-я производная): \n\n");
+
+    node_t * derivativeCopy = treeCopy(derivative);
+    derivativeCopy = simplifyExpression(derivativeCopy);
+    dumpToTEX(&tex, &diff, derivativeCopy);
+    treeDestroy(derivativeCopy);
+
     fprintf(tex.file, "\\vspace{5mm}\n");
 
     fprintf(tex.file, "Производная: \n\n");
