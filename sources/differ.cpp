@@ -305,6 +305,19 @@ static node_t * delNeutralInNonCommutatives(node_t * node, node_t * parent, bool
     *changed_tree = true;
 
     switch (val_(node).op){
+        case DIV:
+            if (type_(right) == NUM){
+                if (val_(right).number == 1.){
+                    delNode(right);
+                    delNode(node);
+
+                    left->parent = parent;
+
+                    return left;
+                }
+            }
+            break;
+
         case SUB:
             if (type_(right) == NUM){
                 if (val_(right).number == 0.){
